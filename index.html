@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corretor de cartões-resposta</title>
+<style>
+:root{
+  --papel:#E9ECEF;
+  --superficie:#FFFFFF;
+  --tinta:#1C242B;
+  --tinta-fraca:#5C6A75;
+  --linha:#CBD4DB;
+  --acao:#0F5F66;
+  --acao-clara:#E2F0F0;
+  --duvida:#B5820B;
+  --duvida-clara:#FCF3DC;
+  --erro:#9E2A24;
+  --ok:#1F7A55;
+  --d1:#2A6F97;
+  --d2:#6D4C9F;
+  --d3:#217A5B;
+  --d4:#A63D5A;
+  --r:10px;
+  --sombra:0 1px 2px rgba(28,36,43,.10), 0 6px 18px rgba(28,36,43,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--papel);
+  color:var(--tinta);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.45;
+  padding-bottom:86px;
+  -webkit-text-size-adjust:100%;
+}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+.topo{
+  position:sticky;top:0;z-index:20;
+  background:var(--tinta);color:#fff;
+  padding:12px 16px calc(12px + env(safe-area-inset-top,0px));
+  padding-top:calc(12px + env(safe-area-inset-top,0px));
+}
+.topo h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.01em}
+.topo p{margin:2px 0 0;font-size:12.5px;color:#A8B6C0;letter-spacing:.04em;text-transform:uppercase}
+main{max-width:760px;margin:0 auto;padding:14px 14px 24px}
+.tela{display:none}
+.tela.ativa{display:block}
+.cartao{
+  background:var(--superficie);border:1px solid var(--linha);border-radius:var(--r);
+  padding:14px;margin-bottom:14px;box-shadow:var(--sombra);
+}
+h2{font-size:15px;margin:0 0 4px;letter-spacing:.01em}
+.legenda{font-size:13.5px;color:var(--tinta-fraca);margin:0 0 12px}
+label{font-size:13px;color:var(--tinta-fraca);display:block;margin-bottom:4px}
+input[type=text],input[type=number],select{
+  width:100%;padding:9px 10px;border:1px solid var(--linha);border-radius:8px;
+  background:#fff;color:var(--tinta);font-size:16px;font-family:inherit;
+}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #0F5F6655;outline-offset:1px}
+.bt{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 14px;border-radius:9px;border:1px solid var(--acao);
+  background:var(--acao);color:#fff;font-size:15px;font-weight:600;
+  font-family:inherit;cursor:pointer;min-height:44px;
+}
+.bt.secundario{background:#fff;color:var(--acao)}
+.bt.neutro{background:#fff;color:var(--tinta);border-color:var(--linha)}
+.bt.perigo{background:#fff;color:var(--erro);border-color:#E0B7B4}
+.bt[disabled]{opacity:.45;cursor:not-allowed}
+.bt.largo{width:100%}
+.linha-bts{display:flex;gap:8px;flex-wrap:wrap}
+.linha-bts>.bt{flex:1 1 auto}
+.aviso{
+  border-left:4px solid var(--duvida);background:var(--duvida-clara);
+  padding:10px 12px;border-radius:6px;font-size:13.5px;margin:10px 0;
+}
+.aviso.erro{border-left-color:var(--erro);background:#FBEDEC}
+.aviso.ok{border-left-color:var(--ok);background:#E9F5EF}
+.abas{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
+  background:var(--superficie);border-top:1px solid var(--linha);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.abas button{
+  flex:1;background:none;border:0;padding:9px 4px 10px;font-family:inherit;
+  font-size:11.5px;color:var(--tinta-fraca);cursor:pointer;letter-spacing:.03em;
+  text-transform:uppercase;font-weight:600;border-top:3px solid transparent;margin-top:-1px;
+}
+.abas button .num{display:block;font-size:17px;font-weight:700;letter-spacing:0;text-transform:none}
+.abas button.ativa{color:var(--acao);border-top-color:var(--acao)}
+.grade-gab{display:flex;flex-direction:column;gap:4px}
+.q{
+  display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:8px;
+  background:#fff;border:1px solid transparent;
+}
+.q:nth-child(odd){background:#F4F6F7}
+.q.duvida{background:var(--duvida-clara);border-color:#E8D49A}
+.q .n{width:30px;text-align:right;font-size:13.5px;color:var(--tinta-fraca);flex:none}
+.q .pt{width:9px;height:9px;border-radius:50%;flex:none}
+.alts{display:flex;gap:4px;flex:1;justify-content:flex-end}
+.alts button{
+  width:38px;height:38px;border-radius:8px;border:1px solid var(--linha);
+  background:#fff;color:var(--tinta-fraca);font-size:15px;font-weight:600;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:pointer;
+}
+.alts button.sel{background:var(--acao);border-color:var(--acao);color:#fff}
+.alts button.nula{font-size:13px}
+.discs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.disc-campo{display:flex;align-items:center;gap:8px}
+.disc-campo .pt{width:12px;height:12px;border-radius:50%;flex:none}
+.pill{
+  display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;
+  background:var(--acao-clara);color:var(--acao);font-weight:600;letter-spacing:.02em;
+}
+.pill.pendente{background:#EEF1F3;color:var(--tinta-fraca)}
+.pill.alerta{background:var(--duvida-clara);color:var(--duvida)}
+.tela-canvas{position:relative;background:#20272D;border-radius:8px;overflow:hidden;line-height:0}
+.tela-canvas canvas.folha{display:block;width:100%;touch-action:none}
+.lupa{
+  position:absolute;top:8px;right:8px;width:112px;height:112px;border-radius:8px;
+  border:2px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.4);display:none;background:#fff;
+}
+.lupa.ativa{display:block}
+.lupa.esquerda{right:auto;left:8px}
+.passo{
+  display:flex;align-items:baseline;gap:8px;font-size:14px;margin:12px 0 8px;
+}
+.passo .idx{
+  font-family:ui-monospace,monospace;font-size:12px;background:var(--tinta);color:#fff;
+  border-radius:5px;padding:2px 6px;flex:none;
+}
+.blocos{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.bloco{display:flex;align-items:center;gap:8px;font-size:14px}
+.bloco input{width:74px;text-align:center}
+.bloco .rot{font-size:13px;color:var(--tinta-fraca);width:66px;flex:none}
+.bloco button{
+  border:1px solid var(--linha);background:#fff;border-radius:8px;width:38px;height:38px;
+  font-size:17px;color:var(--erro);cursor:pointer;flex:none;
+}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--linha)}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--tinta-fraca);font-weight:600}
+td.nota{font-family:ui-monospace,monospace;text-align:right;white-space:nowrap}
+.rolagem{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ajustes{border-top:1px solid var(--linha);margin-top:12px;padding-top:12px}
+.ajustes summary{font-size:13.5px;color:var(--acao);cursor:pointer;font-weight:600}
+.slider-linha{margin-top:10px}
+.slider-linha .valor{float:right;font-family:ui-monospace,monospace;font-size:13px;color:var(--tinta-fraca)}
+input[type=range]{width:100%;accent-color:var(--acao)}
+.resumo-notas{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
+.nota-caixa{border:1px solid var(--linha);border-radius:9px;padding:9px 10px;background:#fff}
+.nota-caixa .nome{font-size:12px;color:var(--tinta-fraca);display:flex;align-items:center;gap:6px}
+.nota-caixa .nome .pt{width:9px;height:9px;border-radius:50%;flex:none}
+.nota-caixa .v{font-family:ui-monospace,monospace;font-size:23px;font-weight:700;line-height:1.1}
+.nota-caixa .v small{font-size:12px;font-weight:400;color:var(--tinta-fraca)}
+.arquivo{display:none}
+.vazio{text-align:center;color:var(--tinta-fraca);font-size:14px;padding:22px 8px}
+.oculto{display:none !important}
+@media (prefers-reduced-motion:no-preference){
+  .bt,.alts button{transition:background .12s ease,color .12s ease,border-color .12s ease}
+}
+@media (min-width:560px){
+  .alts button{width:44px;height:42px}
+  .resumo-notas{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <h1>Corretor de cartões-resposta</h1>
+  <p id="topo-sub">Leitura por foto, conferência e notas por disciplina</p>
+</header>
+
+<main>
+
+  <!-- ============ PROVA ============ -->
+  <section id="tab-prova" class="tela ativa">
+    <div class="cartao">
+      <h2>Disciplinas</h2>
+      <p class="legenda">Quatro disciplinas na mesma prova. Os nomes aparecem nas notas e no arquivo exportado.</p>
+      <div class="discs" id="campos-disciplinas"></div>
+    </div>
+
+    <div class="cartao">
+      <h2>Gabarito <span id="pill-gab" class="pill pendente">0 de 40</span></h2>
+      <p class="legenda">Toque na alternativa correta de cada questão. O símbolo de anulada dá o ponto a todos.</p>
+      <div class="linha-bts" style="margin-bottom:12px">
+        <button class="bt neutro" id="bt-avancado">Trocar disciplina por questão</button>
+        <button class="bt neutro" id="bt-limpar-gab">Limpar gabarito</button>
+      </div>
+      <div id="alerta-disc"></div>
+      <div class="grade-gab" id="grade-gabarito"></div>
+    </div>
+
+    <div class="cartao">
+      <h2>Configuração salva</h2>
+      <p class="legenda">Guarde o gabarito e a calibração num arquivo para reabrir depois ou usar em outro aparelho.</p>
+      <div class="linha-bts">
+        <button class="bt secundario" id="bt-exportar-config">Salvar em arquivo</button>
+        <button class="bt secundario" id="bt-importar-config">Abrir arquivo</button>
+      </div>
+      <input type="file" id="arq-config" class="arquivo" accept="application/json,.json">
+    </div>
+  </section>
+
+  <!-- ============ CARTÃO ============ -->
+  <section id="tab-cartao" class="tela">
+    <div class="cartao">
+      <h2>Estrutura do cartão <span id="pill-calib" class="pill pendente">sem calibração</span></h2>
+      <p class="legenda">Cada bloco é um conjunto de questões impresso em sequência, sem vão no meio. O padrão já corresponde ao cartão de 40 questões em cinco colunas.</p>
+      <div class="blocos" id="lista-blocos"></div>
+      <div class="linha-bts">
+        <button class="bt neutro" id="bt-add-bloco">Adicionar bloco</button>
+        <button class="bt neutro" id="bt-blocos-padrao">Voltar ao padrão</button>
+      </div>
+      <div id="alerta-blocos"></div>
+    </div>
+
+    <div class="cartao">
+      <h2>Calibração</h2>
+      <p class="legenda">Feita uma vez, sobre uma foto do cartão em branco. Depois disso a correção do dia a dia pede só os quatro cantos.</p>
+
+      <div id="cal-passo-foto">
+        <button class="bt largo" id="bt-foto-calib">Escolher foto do cartão em branco</button>
+        <input type="file" id="arq-calib" class="arquivo" accept="image/*">
+      </div>
+
+      <div id="cal-passo-canvas" class="oculto">
+        <div class="passo"><span class="idx mono" id="cal-idx">1</span><span id="cal-instrucao"></span></div>
+        <div class="tela-canvas">
+          <canvas id="cal-canvas" class="folha"></canvas>
+          <canvas id="cal-lupa" class="lupa" width="112" height="112"></canvas>
+        </div>
+        <div class="linha-bts" style="margin-top:10px">
+          <button class="bt neutro" id="cal-desfazer">Desfazer ponto</button>
+          <button class="bt" id="cal-avancar">Continuar</button>
+        </div>
+        <div class="linha-bts" style="margin-top:8px">
+          <button class="bt neutro" id="cal-recomecar">Recomeçar calibração</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CORRIGIR ============ -->
+  <section id="tab-corrigir" class="tela">
+    <div class="cartao" id="cor-bloqueio">
+      <h2>Antes de corrigir</h2>
+      <div id="cor-pendencias"></div>
+    </div>
+
+    <div class="cartao" id="cor-passo-foto">
+      <h2>Nova prova</h2>
+      <p class="legenda">Cartão apoiado na mesa, área de respostas inteira no enquadramento, celular de frente.</p>
+      <p class="legenda" id="cor-referencias"></p>
+      <button class="bt largo" id="bt-foto-prova">Escolher foto da prova</button>
+      <input type="file" id="arq-prova" class="arquivo" accept="image/*">
+    </div>
+
+    <div class="cartao oculto" id="cor-passo-cantos">
+      <h2>Pontos de referência</h2>
+      <p class="legenda" id="cor-instrucao"></p>
+      <div class="tela-canvas">
+        <canvas id="cor-canvas" class="folha"></canvas>
+        <canvas id="cor-lupa" class="lupa" width="112" height="112"></canvas>
+      </div>
+      <div class="linha-bts" style="margin-top:10px">
+        <button class="bt neutro" id="cor-desfazer">Desfazer ponto</button>
+        <button class="bt" id="cor-ler" disabled>Ler respostas</button>
+      </div>
+      <div class="linha-bts" style="margin-top:8px">
+        <button class="bt neutro" id="cor-trocar-foto">Trocar foto</button>
+      </div>
+    </div>
+
+    <div class="cartao oculto" id="cor-passo-conferencia">
+      <h2>Conferência <span id="pill-duvidas" class="pill">0 dúvidas</span></h2>
+      <p class="legenda">Verde é a marcação lida. Amarelo é questão que precisa do seu olho. Toque para corrigir.</p>
+      <div class="tela-canvas"><canvas id="cor-mapa" class="folha"></canvas></div>
+
+      <div class="resumo-notas" id="resumo-notas"></div>
+
+      <div style="margin:12px 0">
+        <label for="rotulo">Identificação da prova</label>
+        <input type="text" id="rotulo" placeholder="Número de chamada ou nome">
+      </div>
+
+      <div class="linha-bts">
+        <button class="bt largo" id="bt-salvar-prova">Salvar prova e notas</button>
+      </div>
+
+      <details class="ajustes">
+        <summary>Ajustes de leitura</summary>
+        <div class="slider-linha">
+          <label for="sl-limiar">Quanto a casinha precisa escurecer para contar como marcada <span class="valor" id="v-limiar"></span></label>
+          <input type="range" id="sl-limiar" min="4" max="35" step="1">
+        </div>
+        <div class="slider-linha">
+          <label for="sl-tol">Quanto a segunda casinha mais escura pode chegar perto antes de virar dúvida <span class="valor" id="v-tol"></span></label>
+          <input type="range" id="sl-tol" min="25" max="90" step="5">
+        </div>
+        <p class="legenda" style="margin-top:10px">Se muitas questões marcadas estiverem virando dúvida, abaixe o primeiro ajuste. Se casinhas em branco estiverem sendo lidas como resposta, suba.</p>
+        <button class="bt neutro" id="bt-refazer-cantos" style="margin-top:6px">Marcar os cantos de novo</button>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ NOTAS ============ -->
+  <section id="tab-notas" class="tela">
+    <div class="cartao">
+      <h2>Notas lançadas <span id="pill-provas" class="pill pendente">0 provas</span></h2>
+      <div id="tabela-notas"></div>
+      <div class="linha-bts" style="margin-top:12px">
+        <button class="bt" id="bt-csv">Exportar arquivo de notas</button>
+        <button class="bt perigo" id="bt-limpar-notas">Apagar todas</button>
+      </div>
+      <p class="legenda" style="margin-top:10px">O arquivo sai em CSV com ponto e vírgula, que o Excel abre direto em colunas.</p>
+    </div>
+  </section>
+
+</main>
+
+<nav class="abas">
+  <button data-tab="tab-prova" class="ativa"><span class="num mono">1</span>Prova</button>
+  <button data-tab="tab-cartao"><span class="num mono">2</span>Cartão</button>
+  <button data-tab="tab-corrigir"><span class="num mono">3</span>Corrigir</button>
+  <button data-tab="tab-notas"><span class="num mono">4</span>Notas</button>
+</nav>
+
+<script>
+"use strict";
+
+/* ---------------------------------------------------------------
+   Estado
+--------------------------------------------------------------- */
+var LETRAS = ["A","B","C","D","E"];
+var CORES_DISC = ["#2A6F97","#6D4C9F","#217A5B","#A63D5A"];
+var BLOCOS_PADRAO = [[1,6],[7,9],[10,15],[16,18],[19,24],[25,27],[28,33],[34,36],[37,40]];
+
+var estado = {
+  disciplinas: ["Disciplina 1","Disciplina 2","Disciplina 3","Disciplina 4"],
+  gabarito: [],      // por questão: 0..4, "N" (anulada) ou null
+  discQ: [],         // por questão: 0..3
+  blocos: BLOCOS_PADRAO.map(function(b){ return b.slice(); }),
+  calib: null,       // { blocos:[[q0,q1]], celulas:[ [ {u,v} x5 ] x NQ ] }
+  limiar: 0.12,
+  tol: 0.55,
+  provas: []
+};
+var avancado = false;
+
+function nq(){
+  var m = 0;
+  for (var i=0;i<estado.blocos.length;i++) m = Math.max(m, estado.blocos[i][1]);
+  return m || 40;
+}
+function ajustarTamanhos(){
+  var n = nq();
+  while (estado.gabarito.length < n) estado.gabarito.push(null);
+  while (estado.discQ.length < n) estado.discQ.push(Math.min(3, Math.floor(estado.discQ.length/10)));
+  estado.gabarito.length = n;
+  estado.discQ.length = n;
+}
+function questoesDaDisciplina(d){
+  var r = [];
+  for (var q=0;q<estado.discQ.length;q++) if (estado.discQ[q]===d) r.push(q);
+  return r;
+}
+
+/* ---------------------------------------------------------------
+   Persistência opcional (não impede o uso off-line)
+--------------------------------------------------------------- */
+function guardar(){
+  try{
+    if (window.storage && window.storage.set){
+      window.storage.set("corretor:estado", JSON.stringify({
+        disciplinas: estado.disciplinas, gabarito: estado.gabarito, discQ: estado.discQ,
+        blocos: estado.blocos, calib: estado.calib, limiar: estado.limiar,
+        tol: estado.tol, provas: estado.provas
+      }), false);
+    }
+  }catch(e){}
+}
+function restaurar(){
+  try{
+    if (window.storage && window.storage.get){
+      return window.storage.get("corretor:estado", false).then(function(r){
+        if (r && r.value){
+          var o = JSON.parse(r.value);
+          for (var k in o) if (Object.prototype.hasOwnProperty.call(o,k)) estado[k] = o[k];
+        }
+      }).catch(function(){});
+    }
+  }catch(e){}
+  return Promise.resolve();
+}
+
+/* ---------------------------------------------------------------
+   Utilidades
+--------------------------------------------------------------- */
+function $(s){ return document.querySelector(s); }
+function el(tag, cls, txt){
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt !== undefined && txt !== null) e.textContent = txt;
+  return e;
+}
+function fmt(n){
+  if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+  return n.toFixed(2).replace(".",",");
+}
+function mediana(v){
+  var s = v.slice().sort(function(a,b){return a-b;});
+  var m = s.length>>1;
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2;
+}
+
+/* Mapeamento projetivo do quadrado unitário para o quadrilátero da foto.
+   Ordem dos cantos: (0,0) (1,0) (1,1) (0,1). */
+function homografia(p){
+  var x0=p[0].x,y0=p[0].y, x1=p[1].x,y1=p[1].y, x2=p[2].x,y2=p[2].y, x3=p[3].x,y3=p[3].y;
+  var dx1=x1-x2, dx2=x3-x2, sx=x0-x1+x2-x3;
+  var dy1=y1-y2, dy2=y3-y2, sy=y0-y1+y2-y3;
+  var a,b,c,d,e,f,g,h;
+  if (Math.abs(sx)<1e-9 && Math.abs(sy)<1e-9){
+    a=x1-x0; b=x2-x1; c=x0; d=y1-y0; e=y2-y1; f=y0; g=0; h=0;
+  } else {
+    var den = dx1*dy2 - dx2*dy1;
+    if (Math.abs(den)<1e-12) den = 1e-12;
+    g = (sx*dy2 - dx2*sy)/den;
+    h = (dx1*sy - sx*dy1)/den;
+    a = x1-x0+g*x1; b = x3-x0+h*x3; c = x0;
+    d = y1-y0+g*y1; e = y3-y0+h*y3; f = y0;
+  }
+  return {a:a,b:b,c:c,d:d,e:e,f:f,g:g,h:h};
+}
+function mapear(H,u,v){
+  var w = H.g*u + H.h*v + 1;
+  if (Math.abs(w)<1e-12) w = 1e-12;
+  return { x:(H.a*u + H.b*v + H.c)/w, y:(H.d*u + H.e*v + H.f)/w };
+}
+
+function inverter3(m){
+  var a=m[0][0],b=m[0][1],c=m[0][2],d=m[1][0],e=m[1][1],f=m[1][2],g=m[2][0],h=m[2][1],i=m[2][2];
+  var A=e*i-f*h, B=-(d*i-f*g), C=d*h-e*g;
+  var det = a*A + b*B + c*C;
+  if (Math.abs(det) < 1e-12) det = 1e-12;
+  return [
+    [A/det, (c*h-b*i)/det, (b*f-c*e)/det],
+    [B/det, (a*i-c*g)/det, (c*d-a*f)/det],
+    [C/det, (b*g-a*h)/det, (a*e-b*d)/det]
+  ];
+}
+
+/* Mapa do cartão para a foto, ancorado em quatro casinhas de referência.
+   refUnit são as posições dessas casinhas no cartão calibrado;
+   pontosFoto são os toques do professor na foto de agora. */
+function fazerMapa(pontosFoto, refUnit){
+  var H2 = homografia(pontosFoto);
+  var H1 = homografia(refUnit.map(function(p){ return {x:p.u, y:p.v}; }));
+  var Mi = inverter3([[H1.a,H1.b,H1.c],[H1.d,H1.e,H1.f],[H1.g,H1.h,1]]);
+  return function(u,v){
+    var w = Mi[2][0]*u + Mi[2][1]*v + Mi[2][2];
+    if (Math.abs(w) < 1e-12) w = 1e-12;
+    var s = (Mi[0][0]*u + Mi[0][1]*v + Mi[0][2])/w;
+    var t = (Mi[1][0]*u + Mi[1][1]*v + Mi[1][2])/w;
+    return mapear(H2, s, t);
+  };
+}
+
+/* Carrega o arquivo de imagem já corrigido de orientação e limitado em tamanho */
+function carregarImagem(file){
+  return new Promise(function(res, rej){
+    var pronto = function(fonte, w, h){
+      var max = 1700;
+      var esc = Math.min(1, max/Math.max(w,h));
+      var cv = document.createElement("canvas");
+      cv.width = Math.round(w*esc); cv.height = Math.round(h*esc);
+      var cx = cv.getContext("2d", {willReadFrequently:true});
+      cx.drawImage(fonte, 0, 0, cv.width, cv.height);
+      res({ canvas:cv, ctx:cx, w:cv.width, h:cv.height, dados:cx.getImageData(0,0,cv.width,cv.height) });
+    };
+    if (window.createImageBitmap){
+      createImageBitmap(file, {imageOrientation:"from-image"}).then(function(bmp){
+        pronto(bmp, bmp.width, bmp.height);
+      }).catch(function(){ viaImg(); });
+    } else viaImg();
+
+    function viaImg(){
+      var url = URL.createObjectURL(file);
+      var im = new Image();
+      im.onload = function(){ pronto(im, im.naturalWidth, im.naturalHeight); URL.revokeObjectURL(url); };
+      im.onerror = function(){ URL.revokeObjectURL(url); rej(new Error("imagem")); };
+      im.src = url;
+    }
+  });
+}
+
+/* Endireita a foto para um retângulo, usado na calibração e no mapa de conferência */
+function endireitar(src, fn, RW, RH){
+  var out = document.createElement("canvas");
+  out.width = RW; out.height = RH;
+  var octx = out.getContext("2d");
+  var img = octx.createImageData(RW, RH);
+  var od = img.data, sd = src.dados.data, sw = src.w, sh = src.h;
+  for (var y=0;y<RH;y++){
+    var v = (y+0.5)/RH;
+    for (var x=0;x<RW;x++){
+      var u = (x+0.5)/RW;
+      var p = fn(u,v);
+      var sx = p.x|0, sy = p.y|0;
+      var o = (y*RW + x)*4;
+      if (sx>=0 && sy>=0 && sx<sw && sy<sh){
+        var i = (sy*sw + sx)*4;
+        od[o]=sd[i]; od[o+1]=sd[i+1]; od[o+2]=sd[i+2]; od[o+3]=255;
+      } else { od[o]=32; od[o+1]=39; od[o+2]=45; od[o+3]=255; }
+    }
+  }
+  octx.putImageData(img,0,0);
+  return out;
+}
+function proporcao(p){
+  function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+  var larg = (dist(p[0],p[1]) + dist(p[3],p[2]))/2;
+  var alt  = (dist(p[0],p[3]) + dist(p[1],p[2]))/2;
+  var RW = 1100;
+  var RH = Math.max(200, Math.round(RW * alt / Math.max(1,larg)));
+  return {RW:RW, RH:RH};
+}
+
+/* ---------------------------------------------------------------
+   Seletor de pontos sobre a foto, com lupa
+--------------------------------------------------------------- */
+function Seletor(canvas, lupa){
+  this.cv = canvas;
+  this.ctx = canvas.getContext("2d");
+  this.lupa = lupa;
+  this.lctx = lupa.getContext("2d");
+  this.pts = [];
+  this.max = 4;
+  this.fecharPoligono = true;
+  this.aoMudar = null;
+  this.src = null;
+  var self = this;
+
+  canvas.addEventListener("pointerdown", function(ev){ self._down(ev); });
+  canvas.addEventListener("pointermove", function(ev){ self._move(ev); });
+  canvas.addEventListener("pointerup", function(ev){ self._up(ev); });
+  canvas.addEventListener("pointercancel", function(ev){ self._up(ev); });
+  window.addEventListener("resize", function(){ if (self.src){ self.medir(); self.desenhar(); } });
+}
+Seletor.prototype.definirFonte = function(src, w, h){
+  this.src = src; this.iw = w; this.ih = h; this.pts = [];
+  this.medir(); this.desenhar();
+};
+Seletor.prototype.medir = function(){
+  var larg = this.cv.parentElement.clientWidth || 320;
+  this.escala = larg / this.iw;
+  var alt = this.ih * this.escala;
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  this.cv.width = Math.round(larg*dpr);
+  this.cv.height = Math.round(alt*dpr);
+  this.cv.style.width = larg+"px";
+  this.cv.style.height = alt+"px";
+  this.ctx.setTransform(dpr*this.escala, 0, 0, dpr*this.escala, 0, 0);
+};
+Seletor.prototype.desenhar = function(){
+  if (!this.src) return;
+  var c = this.ctx, k = 1/this.escala;
+  c.clearRect(0,0,this.iw,this.ih);
+  c.drawImage(this.src, 0, 0, this.iw, this.ih);
+  if (this.pts.length > 1){
+    c.beginPath();
+    c.moveTo(this.pts[0].x, this.pts[0].y);
+    for (var i=1;i<this.pts.length;i++) c.lineTo(this.pts[i].x, this.pts[i].y);
+    if (this.fecharPoligono && this.pts.length === this.max) c.closePath();
+    c.strokeStyle = "#15C7C0"; c.lineWidth = 2*k; c.stroke();
+  }
+  for (var j=0;j<this.pts.length;j++){
+    var p = this.pts[j];
+    c.beginPath(); c.arc(p.x, p.y, 9*k, 0, Math.PI*2);
+    c.fillStyle = "rgba(15,95,102,.85)"; c.fill();
+    c.strokeStyle = "#fff"; c.lineWidth = 2*k; c.stroke();
+    c.beginPath(); c.moveTo(p.x-14*k,p.y); c.lineTo(p.x+14*k,p.y);
+    c.moveTo(p.x,p.y-14*k); c.lineTo(p.x,p.y+14*k);
+    c.strokeStyle = "rgba(255,255,255,.9)"; c.lineWidth = 1.4*k; c.stroke();
+  }
+  if (this.aposDesenhar) this.aposDesenhar(c, k);
+};
+Seletor.prototype._pos = function(ev){
+  var r = this.cv.getBoundingClientRect();
+  return { x:(ev.clientX - r.left)/this.escala, y:(ev.clientY - r.top)/this.escala };
+};
+Seletor.prototype._down = function(ev){
+  if (!this.src) return;
+  ev.preventDefault();
+  var p = this._pos(ev), lim = 26/this.escala, achou = -1;
+  for (var i=0;i<this.pts.length;i++){
+    if (Math.hypot(this.pts[i].x-p.x, this.pts[i].y-p.y) < lim){ achou = i; break; }
+  }
+  if (achou < 0){
+    if (this.pts.length >= this.max) return;
+    this.pts.push({x:p.x, y:p.y});
+    achou = this.pts.length-1;
+  }
+  this.arrastando = achou;
+  this.pts[achou] = {x:p.x, y:p.y};
+  try{ this.cv.setPointerCapture(ev.pointerId); }catch(e){}
+  this._lupa(p, ev);
+  this.desenhar();
+  if (this.aoMudar) this.aoMudar();
+};
+Seletor.prototype._move = function(ev){
+  if (this.arrastando === undefined || this.arrastando === null || this.arrastando < 0) return;
+  ev.preventDefault();
+  var p = this._pos(ev);
+  p.x = Math.max(0, Math.min(this.iw, p.x));
+  p.y = Math.max(0, Math.min(this.ih, p.y));
+  this.pts[this.arrastando] = p;
+  this._lupa(p, ev);
+  this.desenhar();
+};
+Seletor.prototype._up = function(){
+  this.arrastando = -1;
+  this.lupa.classList.remove("ativa");
+  if (this.aoMudar) this.aoMudar();
+};
+Seletor.prototype._lupa = function(p, ev){
+  var z = 3.2, s = 112;
+  var lado = s/z;
+  this.lctx.setTransform(1,0,0,1,0,0);
+  this.lctx.fillStyle = "#fff";
+  this.lctx.fillRect(0,0,s,s);
+  this.lctx.drawImage(this.src, p.x-lado/2, p.y-lado/2, lado, lado, 0, 0, s, s);
+  this.lctx.strokeStyle = "rgba(15,95,102,.9)"; this.lctx.lineWidth = 1;
+  this.lctx.beginPath();
+  this.lctx.moveTo(0,s/2); this.lctx.lineTo(s,s/2);
+  this.lctx.moveTo(s/2,0); this.lctx.lineTo(s/2,s);
+  this.lctx.stroke();
+  this.lctx.strokeStyle = "rgba(15,95,102,.5)";
+  this.lctx.strokeRect(s/2-11, s/2-11, 22, 22);
+  var r = this.cv.getBoundingClientRect();
+  var noLadoEsquerdo = (ev.clientX - r.left) > r.width*0.55;
+  this.lupa.classList.toggle("esquerda", noLadoEsquerdo);
+  this.lupa.classList.add("ativa");
+};
+Seletor.prototype.desfazer = function(){
+  this.pts.pop(); this.desenhar();
+  if (this.aoMudar) this.aoMudar();
+};
+
+/* ---------------------------------------------------------------
+   Aba Prova: disciplinas e gabarito
+--------------------------------------------------------------- */
+function montarDisciplinas(){
+  var box = $("#campos-disciplinas");
+  box.innerHTML = "";
+  for (var d=0; d<4; d++){
+    (function(d){
+      var wrap = el("div","disc-campo");
+      var pt = el("span","pt"); pt.style.background = CORES_DISC[d];
+      var inp = document.createElement("input");
+      inp.type = "text"; inp.value = estado.disciplinas[d];
+      inp.setAttribute("aria-label","Nome da disciplina "+(d+1));
+      inp.addEventListener("input", function(){
+        estado.disciplinas[d] = inp.value || ("Disciplina "+(d+1));
+        montarGabarito(); atualizarNotasTabela(); guardar();
+      });
+      wrap.appendChild(pt); wrap.appendChild(inp);
+      box.appendChild(wrap);
+    })(d);
+  }
+}
+
+function montarGabarito(){
+  ajustarTamanhos();
+  var box = $("#grade-gabarito");
+  box.innerHTML = "";
+  var n = nq();
+  for (var q=0; q<n; q++){
+    (function(q){
+      var linha = el("div","q");
+      linha.appendChild(el("span","n", String(q+1)));
+      var pt = el("span","pt");
+      pt.style.background = CORES_DISC[estado.discQ[q]];
+      pt.title = estado.disciplinas[estado.discQ[q]];
+      linha.appendChild(pt);
+
+      if (avancado){
+        var sel = document.createElement("select");
+        sel.style.maxWidth = "48%";
+        for (var d=0; d<4; d++){
+          var op = document.createElement("option");
+          op.value = String(d); op.textContent = estado.disciplinas[d];
+          if (estado.discQ[q]===d) op.selected = true;
+          sel.appendChild(op);
+        }
+        sel.addEventListener("change", function(){
+          estado.discQ[q] = parseInt(sel.value,10);
+          pt.style.background = CORES_DISC[estado.discQ[q]];
+          checarDisciplinas(); guardar();
+        });
+        linha.appendChild(sel);
+      }
+
+      var alts = el("div","alts");
+      for (var i=0;i<5;i++){
+        (function(i){
+          var b = el("button", null, LETRAS[i]);
+          b.type = "button";
+          if (estado.gabarito[q] === i) b.className = "sel";
+          b.addEventListener("click", function(){
+            estado.gabarito[q] = (estado.gabarito[q] === i) ? null : i;
+            montarGabarito(); guardar();
+          });
+          alts.appendChild(b);
+        })(i);
+      }
+      var bn = el("button", "nula", "anul");
+      bn.type = "button";
+      bn.title = "Questão anulada";
+      if (estado.gabarito[q] === "N") bn.className = "nula sel";
+      bn.addEventListener("click", function(){
+        estado.gabarito[q] = (estado.gabarito[q] === "N") ? null : "N";
+        montarGabarito(); guardar();
+      });
+      alts.appendChild(bn);
+
+      linha.appendChild(alts);
+      box.appendChild(linha);
+    })(q);
+  }
+  var preenchidas = estado.gabarito.filter(function(g){ return g !== null && g !== undefined; }).length;
+  var pill = $("#pill-gab");
+  pill.textContent = preenchidas + " de " + n;
+  pill.className = "pill" + (preenchidas === n ? "" : " pendente");
+  checarDisciplinas();
+  atualizarPendencias();
+}
+
+function checarDisciplinas(){
+  var cx = $("#alerta-disc");
+  cx.innerHTML = "";
+  var cont = [0,0,0,0];
+  for (var q=0;q<estado.discQ.length;q++) cont[estado.discQ[q]]++;
+  var partes = [];
+  for (var d=0; d<4; d++) partes.push(estado.disciplinas[d] + ": " + cont[d]);
+  var desigual = cont.some(function(c){ return c !== cont[0]; });
+  if (desigual){
+    var a = el("div","aviso","Questões por disciplina — " + partes.join(", ") + ". A nota de cada uma é calculada sobre o próprio total, então isso não impede a correção.");
+    cx.appendChild(a);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Aba Cartão: blocos e calibração
+--------------------------------------------------------------- */
+function montarBlocos(){
+  var box = $("#lista-blocos");
+  box.innerHTML = "";
+  estado.blocos.forEach(function(b, idx){
+    var linha = el("div","bloco");
+    linha.appendChild(el("span","rot","Bloco "+(idx+1)));
+    var i0 = document.createElement("input");
+    i0.type = "number"; i0.min = "1"; i0.value = b[0];
+    i0.setAttribute("aria-label","Primeira questão do bloco "+(idx+1));
+    var sep = el("span",null,"a");
+    var i1 = document.createElement("input");
+    i1.type = "number"; i1.min = "1"; i1.value = b[1];
+    i1.setAttribute("aria-label","Última questão do bloco "+(idx+1));
+    function troca(){
+      var a = parseInt(i0.value,10) || 1;
+      var z = parseInt(i1.value,10) || a;
+      estado.blocos[idx] = [a, Math.max(a,z)];
+      estado.calib = null;
+      montarBlocos(); montarGabarito(); atualizarCalibPill(); guardar();
+    }
+    i0.addEventListener("change", troca);
+    i1.addEventListener("change", troca);
+    var rm = el("button", null, "×");
+    rm.type = "button";
+    rm.setAttribute("aria-label","Remover bloco "+(idx+1));
+    rm.addEventListener("click", function(){
+      if (estado.blocos.length <= 1) return;
+      estado.blocos.splice(idx,1);
+      estado.calib = null;
+      montarBlocos(); montarGabarito(); atualizarCalibPill(); guardar();
+    });
+    linha.appendChild(i0); linha.appendChild(sep); linha.appendChild(i1); linha.appendChild(rm);
+    box.appendChild(linha);
+  });
+  checarBlocos();
+}
+function checarBlocos(){
+  var cx = $("#alerta-blocos");
+  cx.innerHTML = "";
+  var vistas = {}, dupes = false, total = 0;
+  estado.blocos.forEach(function(b){
+    for (var q=b[0]; q<=b[1]; q++){
+      if (vistas[q]) dupes = true;
+      vistas[q] = true; total++;
+    }
+  });
+  var n = nq(), faltando = [];
+  for (var q=1; q<=n; q++) if (!vistas[q]) faltando.push(q);
+  if (dupes) cx.appendChild(el("div","aviso erro","Há questões repetidas em mais de um bloco. Ajuste as faixas antes de calibrar."));
+  else if (faltando.length) cx.appendChild(el("div","aviso","Sem bloco definido para as questões " + faltando.join(", ") + "."));
+  else cx.appendChild(el("div","aviso ok", total + " questões cobertas por " + estado.blocos.length + " blocos."));
+}
+function atualizarCalibPill(){
+  var pill = $("#pill-calib");
+  if (estado.calib && estado.calib.ref && estado.calib.celulas && estado.calib.celulas.length === nq()){
+    pill.textContent = "calibrado";
+    pill.className = "pill";
+  } else {
+    pill.textContent = "sem calibração";
+    pill.className = "pill pendente";
+  }
+  atualizarPendencias();
+}
+
+var cal = { src:null, quad:null, reto:null, blocoIdx:0, pontos:[], fase:"cantos" };
+var selCal = null, selCor = null;
+
+function iniciarCalibracao(arquivo){
+  carregarImagem(arquivo).then(function(src){
+    cal.src = src; cal.quad = null; cal.reto = null;
+    cal.blocoIdx = 0; cal.pontos = []; cal.fase = "cantos";
+    $("#cal-passo-foto").classList.add("oculto");
+    $("#cal-passo-canvas").classList.remove("oculto");
+    if (!selCal){
+      selCal = new Seletor($("#cal-canvas"), $("#cal-lupa"));
+      selCal.aoMudar = atualizarCalPasso;
+    }
+    selCal.max = 4; selCal.fecharPoligono = true;
+    selCal.definirFonte(src.canvas, src.w, src.h);
+    atualizarCalPasso();
+  }).catch(function(){
+    alert("Não consegui abrir essa imagem. Tente outra foto.");
+  });
+}
+
+function atualizarCalPasso(){
+  var inst = $("#cal-instrucao"), idx = $("#cal-idx"), av = $("#cal-avancar");
+  if (cal.fase === "cantos"){
+    idx.textContent = "1";
+    var faltam = 4 - selCal.pts.length;
+    var nomes = ["superior esquerdo","superior direito","inferior direito","inferior esquerdo"];
+    inst.textContent = faltam > 0
+      ? "Toque no canto " + nomes[selCal.pts.length] + " da área impressa das respostas. Estes quatro toques servem só para endireitar a foto, não precisam de precisão."
+      : "Quatro cantos marcados. A foto vai ser endireitada com base neles.";
+    av.textContent = "Continuar";
+    av.disabled = faltam > 0;
+  } else if (cal.fase === "blocos"){
+    var b = estado.blocos[cal.blocoIdx];
+    idx.textContent = (cal.blocoIdx+1) + "/" + estado.blocos.length;
+    var n = selCal.pts.length;
+    inst.textContent = n === 0
+      ? "Bloco " + (cal.blocoIdx+1) + ", questões " + b[0] + " a " + b[1] + ". Toque no centro do quadradinho A da questão " + b[0] + "."
+      : (n === 1
+        ? "Agora toque no centro do quadradinho E da questão " + b[1] + "."
+        : "Bloco " + (cal.blocoIdx+1) + " marcado. Confira os dois pontos e continue.");
+    av.textContent = (cal.blocoIdx === estado.blocos.length-1) ? "Concluir" : "Próximo bloco";
+    av.disabled = n < 2;
+  } else {
+    idx.textContent = "ok";
+    inst.textContent = "Confira se os marcadores caíram sobre as casinhas. Se algum estiver fora, recomece a calibração.";
+    av.textContent = "Salvar calibração";
+    av.disabled = false;
+  }
+}
+
+function avancarCalibracao(){
+  if (cal.fase === "cantos"){
+    cal.quad = selCal.pts.slice();
+    var H = homografia(cal.quad);
+    var fn = function(u,v){ return mapear(H,u,v); };
+    var p = proporcao(cal.quad);
+    cal.reto = endireitar(cal.src, fn, p.RW, p.RH);
+    cal.fase = "blocos"; cal.blocoIdx = 0; cal.pontos = [];
+    selCal.max = 2; selCal.fecharPoligono = false;
+    selCal.aposDesenhar = null;
+    selCal.definirFonte(cal.reto, cal.reto.width, cal.reto.height);
+    atualizarCalPasso();
+    return;
+  }
+  if (cal.fase === "blocos"){
+    var pts = selCal.pts.slice(0,2);
+    cal.pontos[cal.blocoIdx] = [
+      { u: pts[0].x/cal.reto.width, v: pts[0].y/cal.reto.height },
+      { u: pts[1].x/cal.reto.width, v: pts[1].y/cal.reto.height }
+    ];
+    if (cal.blocoIdx < estado.blocos.length-1){
+      cal.blocoIdx++;
+      selCal.definirFonte(cal.reto, cal.reto.width, cal.reto.height);
+      atualizarCalPasso();
+    } else {
+      var celulas = montarCelulas(cal.pontos);
+      estado.calib = {
+        blocos: estado.blocos.map(function(b){return b.slice();}),
+        celulas: celulas,
+        ref: escolherReferencias(celulas)
+      };
+      cal.fase = "revisao";
+      selCal.max = 0;
+      selCal.aposDesenhar = function(c, k){
+        desenharCelulas(c, k, cal.reto.width, cal.reto.height, function(u,v){
+          return { x:u*cal.reto.width, y:v*cal.reto.height };
+        });
+      };
+      selCal.definirFonte(cal.reto, cal.reto.width, cal.reto.height);
+      atualizarCalPasso();
+    }
+    return;
+  }
+  // revisão
+  atualizarCalibPill();
+  guardar();
+  $("#cal-passo-canvas").classList.add("oculto");
+  $("#cal-passo-foto").classList.remove("oculto");
+  var ok = el("div","aviso ok","Calibração salva. Na aba Corrigir, cada prova vai pedir estas quatro casinhas: " + textoReferencias() + ".");
+  $("#cal-passo-foto").prepend(ok);
+  setTimeout(function(){ ok.remove(); }, 12000);
+}
+
+/* Quatro casinhas bem afastadas entre si, usadas como âncora em cada foto */
+function escolherReferencias(celulas){
+  var umin=1, umax=0, vmin=1, vmax=0;
+  celulas.forEach(function(cels){
+    if (!cels) return;
+    cels.forEach(function(c){
+      umin=Math.min(umin,c.u); umax=Math.max(umax,c.u);
+      vmin=Math.min(vmin,c.v); vmax=Math.max(vmax,c.v);
+    });
+  });
+  var alvos = [[umin,vmin],[umax,vmin],[umax,vmax],[umin,vmax]];
+  return alvos.map(function(a){
+    var melhor = null, dist = Infinity;
+    celulas.forEach(function(cels, q){
+      if (!cels) return;
+      cels.forEach(function(c, i){
+        var d = (c.u-a[0])*(c.u-a[0]) + (c.v-a[1])*(c.v-a[1]);
+        if (d < dist){ dist = d; melhor = { q:q, c:i, u:c.u, v:c.v }; }
+      });
+    });
+    return melhor;
+  });
+}
+function nomeReferencia(r){
+  return "quadradinho " + LETRAS[r.c] + " da questão " + (r.q+1);
+}
+function textoReferencias(){
+  if (!estado.calib || !estado.calib.ref) return "";
+  return estado.calib.ref.map(nomeReferencia).join(", ");
+}
+/* desenha os 200 marcadores usando uma função de posição */
+function desenharCelulas(c, k, W, H, fn){
+  if (!estado.calib) return;
+  c.lineWidth = 1.8*k;
+  estado.calib.celulas.forEach(function(cels, q){
+    if (!cels) return;
+    var raio = raioCelula(q, W, H);
+    cels.forEach(function(cel){
+      var p = fn(cel.u, cel.v);
+      c.beginPath();
+      c.arc(p.x, p.y, raio, 0, Math.PI*2);
+      c.strokeStyle = "rgba(21,199,192,.95)";
+      c.stroke();
+    });
+  });
+}
+
+function montarCelulas(pontos){
+  var n = nq();
+  var celulas = new Array(n);
+  estado.blocos.forEach(function(b, idx){
+    var par = pontos[idx];
+    if (!par) return;
+    var linhas = b[1]-b[0]+1;
+    for (var r=0; r<linhas; r++){
+      var q = b[0]-1+r;
+      var fr = linhas>1 ? r/(linhas-1) : 0;
+      var arr = [];
+      for (var c=0;c<5;c++){
+        var fc = c/4;
+        arr.push({
+          u: par[0].u + (par[1].u - par[0].u)*fc,
+          v: par[0].v + (par[1].v - par[0].v)*fr
+        });
+      }
+      celulas[q] = arr;
+    }
+  });
+  return celulas;
+}
+
+/* espaçamento entre casinhas vizinhas, sempre dentro do mesmo bloco */
+function blocoDaQuestao(q){
+  for (var i=0;i<estado.blocos.length;i++){
+    if (q+1 >= estado.blocos[i][0] && q+1 <= estado.blocos[i][1]) return i;
+  }
+  return -1;
+}
+function passosDaQuestao(q){
+  var cels = estado.calib.celulas[q];
+  var du = Math.abs(cels[1].u - cels[0].u);
+  var dv = du;
+  var bi = blocoDaQuestao(q);
+  if (bi >= 0){
+    var b = estado.blocos[bi];
+    if (b[1] > b[0]){
+      var viz = (q+1 < b[1]) ? q+1 : q-1;
+      var outro = estado.calib.celulas[viz];
+      if (outro){
+        var d = Math.abs(outro[0].v - cels[0].v);
+        if (d > 1e-5) dv = d;
+      }
+    }
+  }
+  return { du:du, dv:dv };
+}
+/* raio de amostragem em unidades do retângulo endireitado */
+function raioCelula(q, W, H){
+  var p = passosDaQuestao(q);
+  return Math.max(3, 0.30 * Math.min(p.du * W, p.dv * H));
+}
+
+/* ---------------------------------------------------------------
+   Aba Corrigir
+--------------------------------------------------------------- */
+var cor = { src:null, quad:null, H:null, valores:null, respostas:null, duvidas:null, reto:null };
+
+function atualizarPendencias(){
+  var box = $("#cor-pendencias");
+  if (!box) return;
+  box.innerHTML = "";
+  var faltas = [];
+  var n = nq();
+  var vazias = 0;
+  for (var q=0;q<n;q++) if (estado.gabarito[q] === null || estado.gabarito[q] === undefined) vazias++;
+  if (vazias) faltas.push("O gabarito ainda tem " + vazias + " questão" + (vazias>1?"s":"") + " sem resposta na aba Prova.");
+  if (!estado.calib || !estado.calib.ref || !estado.calib.celulas || estado.calib.celulas.length !== n) faltas.push("O cartão ainda não foi calibrado na aba Cartão.");
+  if (faltas.length){
+    faltas.forEach(function(f){ box.appendChild(el("div","aviso",f)); });
+    $("#cor-bloqueio").classList.remove("oculto");
+  } else {
+    $("#cor-bloqueio").classList.add("oculto");
+  }
+  $("#bt-foto-prova").disabled = !(estado.calib && estado.calib.ref);
+  var ref = $("#cor-referencias");
+  if (ref) ref.textContent = (estado.calib && estado.calib.ref)
+    ? "Cada prova pede quatro toques: " + textoReferencias() + "."
+    : "";
+}
+
+function iniciarCorrecao(arquivo){
+  carregarImagem(arquivo).then(function(src){
+    cor.src = src; cor.quad = null; cor.valores = null;
+    $("#cor-passo-foto").classList.add("oculto");
+    $("#cor-passo-conferencia").classList.add("oculto");
+    $("#cor-passo-cantos").classList.remove("oculto");
+    $("#cor-referencias").textContent = "";
+    if (!selCor){
+      selCor = new Seletor($("#cor-canvas"), $("#cor-lupa"));
+      selCor.aoMudar = function(){
+        var ref = estado.calib.ref;
+        var faltam = 4 - selCor.pts.length;
+        $("#cor-instrucao").textContent = faltam > 0
+          ? "Toque no centro do " + nomeReferencia(ref[selCor.pts.length]) + ". Use a lupa e arraste para acertar o centro."
+          : "Confira se os círculos caíram sobre as casinhas. Se algum estiver deslocado, arraste os quatro pontos até encaixar.";
+        $("#cor-ler").disabled = faltam > 0;
+        selCor.desenhar();
+      };
+      selCor.aposDesenhar = function(c, k){
+        if (selCor.pts.length < 4) return;
+        var fn = fazerMapa(selCor.pts.slice(), estado.calib.ref);
+        desenharCelulas(c, k, cor.src.w, cor.src.h, fn);
+      };
+    }
+    selCor.max = 4; selCor.fecharPoligono = true;
+    selCor.definirFonte(src.canvas, src.w, src.h);
+    selCor.aoMudar();
+  }).catch(function(){
+    alert("Não consegui abrir essa imagem. Tente outra foto.");
+  });
+}
+
+function amostrar(){
+  var fn = fazerMapa(selCor.pts.slice(), estado.calib.ref);
+  cor.quad = selCor.pts.slice();
+  cor.fn = fn;
+  var n = nq();
+  var dados = cor.src.dados.data, sw = cor.src.w, sh = cor.src.h;
+  var vals = new Array(n);
+
+  for (var q=0; q<n; q++){
+    var cels = estado.calib.celulas[q];
+    if (!cels){ vals[q] = [0,0,0,0,0]; continue; }
+    var linha = new Array(5);
+    var passos = passosDaQuestao(q);
+    var passoU = passos.du, passoV = passos.dv;
+    for (var c=0; c<5; c++){
+      var p  = fn(cels[c].u, cels[c].v);
+      var px = fn(cels[c].u + passoU*0.5, cels[c].v);
+      var py = fn(cels[c].u, cels[c].v + passoV*0.5);
+      var rx = Math.hypot(px.x-p.x, px.y-p.y);
+      var ry = Math.hypot(py.x-p.x, py.y-p.y);
+      var r = Math.max(2, 0.6*Math.min(rx, ry));
+      var passo = Math.max(1, Math.round(r/5));
+      var soma = 0, cont = 0;
+      for (var dy2=-r; dy2<=r; dy2+=passo){
+        for (var dx2=-r; dx2<=r; dx2+=passo){
+          if (dx2*dx2 + dy2*dy2 > r*r) continue;
+          var sx = Math.round(p.x+dx2), sy = Math.round(p.y+dy2);
+          if (sx<0||sy<0||sx>=sw||sy>=sh) continue;
+          var i = (sy*sw+sx)*4;
+          var lum = (dados[i]*0.299 + dados[i+1]*0.587 + dados[i+2]*0.114)/255;
+          soma += (1-lum); cont++;
+        }
+      }
+      linha[c] = cont ? soma/cont : 0;
+    }
+    vals[q] = linha;
+  }
+  cor.valores = vals;
+  decidir();
+  var cantos = [fn(0,0), fn(1,0), fn(1,1), fn(0,1)];
+  var p = proporcao(cantos);
+  cor.reto = endireitar(cor.src, fn, p.RW, p.RH);
+  $("#cor-passo-cantos").classList.add("oculto");
+  $("#cor-passo-conferencia").classList.remove("oculto");
+  $("#rotulo").value = "";
+  montarConferencia();
+  desenharMapa();
+  window.scrollTo({top:0, behavior:"auto"});
+}
+
+function decidir(){
+  var n = nq();
+  cor.respostas = new Array(n);
+  cor.duvidas = new Array(n);
+  for (var q=0;q<n;q++){
+    var v = cor.valores[q];
+    var med = mediana(v);
+    var devs = v.map(function(x){ return x - med; });
+    var melhor = -1, iMelhor = -1, segundo = -1;
+    for (var i=0;i<5;i++){
+      if (devs[i] > melhor){ segundo = melhor; melhor = devs[i]; iMelhor = i; }
+      else if (devs[i] > segundo) segundo = devs[i];
+    }
+    if (melhor < estado.limiar){
+      cor.respostas[q] = null; cor.duvidas[q] = "sem";
+    } else if (segundo > melhor * estado.tol){
+      cor.respostas[q] = iMelhor; cor.duvidas[q] = "dupla";
+    } else {
+      cor.respostas[q] = iMelhor; cor.duvidas[q] = null;
+    }
+  }
+}
+
+function notasAtuais(){
+  var notas = [];
+  for (var d=0; d<4; d++){
+    var qs = questoesDaDisciplina(d);
+    var acertos = 0;
+    qs.forEach(function(q){
+      var g = estado.gabarito[q];
+      if (g === "N") acertos++;
+      else if (g !== null && g !== undefined && cor.respostas[q] === g) acertos++;
+    });
+    notas.push({ acertos:acertos, total:qs.length, nota: qs.length ? acertos*10/qs.length : 0 });
+  }
+  return notas;
+}
+
+function montarConferencia(){
+  var box = $("#grade-conferencia");
+  if (!box){
+    box = el("div","grade-gab");
+    box.id = "grade-conferencia";
+    $("#resumo-notas").insertAdjacentElement("beforebegin", box);
+  }
+  box.innerHTML = "";
+  var n = nq(), duvidas = 0;
+  for (var q=0;q<n;q++){
+    (function(q){
+      var linha = el("div","q");
+      if (cor.duvidas[q]) { linha.classList.add("duvida"); duvidas++; }
+      linha.appendChild(el("span","n",String(q+1)));
+      var pt = el("span","pt");
+      pt.style.background = CORES_DISC[estado.discQ[q]];
+      linha.appendChild(pt);
+      if (cor.duvidas[q]){
+        var t = el("span",null, cor.duvidas[q]==="sem" ? "sem marcação" : "duas marcações");
+        t.style.fontSize = "12px"; t.style.color = "#B5820B";
+        linha.appendChild(t);
+      }
+      var alts = el("div","alts");
+      for (var i=0;i<5;i++){
+        (function(i){
+          var b = el("button", null, LETRAS[i]);
+          b.type = "button";
+          if (cor.respostas[q] === i) b.className = "sel";
+          b.addEventListener("click", function(){
+            cor.respostas[q] = i; cor.duvidas[q] = null;
+            montarConferencia(); desenharMapa();
+          });
+          alts.appendChild(b);
+        })(i);
+      }
+      var bv = el("button","nula","—");
+      bv.type = "button";
+      bv.title = "Sem resposta";
+      if (cor.respostas[q] === null) bv.className = "nula sel";
+      bv.addEventListener("click", function(){
+        cor.respostas[q] = null; cor.duvidas[q] = null;
+        montarConferencia(); desenharMapa();
+      });
+      alts.appendChild(bv);
+      linha.appendChild(alts);
+      box.appendChild(linha);
+    })(q);
+  }
+  var pill = $("#pill-duvidas");
+  pill.textContent = duvidas === 0 ? "sem dúvidas" : (duvidas + (duvidas>1?" dúvidas":" dúvida"));
+  pill.className = "pill" + (duvidas ? " alerta" : "");
+  montarResumoNotas();
+}
+
+function montarResumoNotas(){
+  var box = $("#resumo-notas");
+  box.innerHTML = "";
+  var notas = notasAtuais();
+  for (var d=0; d<4; d++){
+    var cx = el("div","nota-caixa");
+    var nome = el("div","nome");
+    var pt = el("span","pt"); pt.style.background = CORES_DISC[d];
+    nome.appendChild(pt);
+    nome.appendChild(el("span",null,estado.disciplinas[d]));
+    var v = el("div","v");
+    v.textContent = fmt(notas[d].nota);
+    var s = el("small",null," (" + notas[d].acertos + "/" + notas[d].total + ")");
+    v.appendChild(s);
+    cx.appendChild(nome); cx.appendChild(v);
+    box.appendChild(cx);
+  }
+}
+
+function desenharMapa(){
+  var cv = $("#cor-mapa");
+  var reto = cor.reto;
+  if (!reto) return;
+  var larg = cv.parentElement.clientWidth || 320;
+  var esc = larg / reto.width;
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(larg*dpr);
+  cv.height = Math.round(reto.height*esc*dpr);
+  cv.style.width = larg+"px";
+  cv.style.height = (reto.height*esc)+"px";
+  var c = cv.getContext("2d");
+  c.setTransform(dpr*esc,0,0,dpr*esc,0,0);
+  c.drawImage(reto,0,0);
+  var W = reto.width, H = reto.height, k = 1/esc;
+  var n = nq();
+  for (var q=0;q<n;q++){
+    var cels = estado.calib.celulas[q];
+    if (!cels) continue;
+    var r = raioCelula(q, W, H) * 1.25;
+    if (cor.duvidas[q]){
+      for (var i=0;i<5;i++){
+        c.beginPath();
+        c.rect(cels[i].u*W - r, cels[i].v*H - r, r*2, r*2);
+        c.fillStyle = "rgba(181,130,11,.22)";
+        c.fill();
+        c.strokeStyle = "rgba(181,130,11,.9)";
+        c.lineWidth = 1.6*k; c.stroke();
+      }
+    }
+    var a = cor.respostas[q];
+    if (a !== null && a !== undefined){
+      c.beginPath();
+      c.rect(cels[a].u*W - r, cels[a].v*H - r, r*2, r*2);
+      c.fillStyle = "rgba(31,122,85,.28)";
+      c.fill();
+      c.strokeStyle = "rgba(31,122,85,.95)";
+      c.lineWidth = 2.2*k; c.stroke();
+    }
+  }
+}
+
+function salvarProva(){
+  var rot = ($("#rotulo").value || "").trim();
+  if (!rot) rot = "Prova " + (estado.provas.length + 1);
+  var notas = notasAtuais();
+  var letras = cor.respostas.map(function(r){ return r === null || r === undefined ? "-" : LETRAS[r]; }).join("");
+  estado.provas.push({ rotulo: rot, notas: notas, respostas: letras });
+  guardar();
+  atualizarNotasTabela();
+  cor.src = null; cor.valores = null; cor.reto = null;
+  $("#cor-passo-conferencia").classList.add("oculto");
+  $("#cor-passo-foto").classList.remove("oculto");
+  var ok = el("div","aviso ok","Prova de " + rot + " salva. Notas: " + notas.map(function(x){return fmt(x.nota);}).join("  ·  "));
+  $("#cor-passo-foto").prepend(ok);
+  setTimeout(function(){ ok.remove(); }, 7000);
+  window.scrollTo({top:0, behavior:"auto"});
+}
+
+/* ---------------------------------------------------------------
+   Aba Notas
+--------------------------------------------------------------- */
+function atualizarNotasTabela(){
+  var box = $("#tabela-notas");
+  box.innerHTML = "";
+  $("#pill-provas").textContent = estado.provas.length + (estado.provas.length === 1 ? " prova" : " provas");
+  $("#pill-provas").className = "pill" + (estado.provas.length ? "" : " pendente");
+  if (!estado.provas.length){
+    box.appendChild(el("div","vazio","Nenhuma prova corrigida ainda. As notas aparecem aqui conforme você confirma cada cartão."));
+    return;
+  }
+  var rol = el("div","rolagem");
+  var t = document.createElement("table");
+  var thead = document.createElement("thead");
+  var tr = document.createElement("tr");
+  tr.appendChild(el("th",null,"Prova"));
+  for (var d=0; d<4; d++) tr.appendChild(el("th",null,estado.disciplinas[d]));
+  tr.appendChild(el("th",null,""));
+  thead.appendChild(tr); t.appendChild(thead);
+  var tb = document.createElement("tbody");
+  estado.provas.forEach(function(p, idx){
+    var l = document.createElement("tr");
+    l.appendChild(el("td",null,p.rotulo));
+    for (var d=0; d<4; d++){
+      var td = el("td","nota", fmt(p.notas[d].nota));
+      l.appendChild(td);
+    }
+    var tdx = el("td");
+    var rm = el("button",null,"×");
+    rm.type = "button";
+    rm.setAttribute("aria-label","Remover a prova de " + p.rotulo);
+    rm.style.cssText = "border:1px solid var(--linha);background:#fff;border-radius:7px;width:34px;height:34px;color:var(--erro);font-size:16px;cursor:pointer";
+    rm.addEventListener("click", function(){
+      if (!confirm("Remover a prova de " + p.rotulo + "?")) return;
+      estado.provas.splice(idx,1);
+      guardar(); atualizarNotasTabela();
+    });
+    tdx.appendChild(rm);
+    l.appendChild(tdx);
+    tb.appendChild(l);
+  });
+  t.appendChild(tb);
+  rol.appendChild(t);
+  box.appendChild(rol);
+}
+
+function baixar(nome, conteudo, tipo){
+  var blob = new Blob([conteudo], {type: tipo});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+
+function exportarCSV(){
+  if (!estado.provas.length){ alert("Ainda não há provas corrigidas."); return; }
+  var cab = ["Prova"];
+  for (var d=0; d<4; d++){
+    cab.push(estado.disciplinas[d] + " - acertos");
+    cab.push(estado.disciplinas[d] + " - nota");
+  }
+  cab.push("Respostas marcadas");
+  var linhas = [cab.join(";")];
+  estado.provas.forEach(function(p){
+    var l = ['"' + String(p.rotulo).replace(/"/g,'""') + '"'];
+    for (var d=0; d<4; d++){
+      l.push(p.notas[d].acertos + "/" + p.notas[d].total);
+      l.push(p.notas[d].nota.toFixed(2).replace(".",","));
+    }
+    l.push(p.respostas);
+    linhas.push(l.join(";"));
+  });
+  baixar("notas.csv", "\ufeff" + linhas.join("\r\n"), "text/csv;charset=utf-8");
+}
+
+/* ---------------------------------------------------------------
+   Ligações da interface
+--------------------------------------------------------------- */
+function abrirAba(id){
+  document.querySelectorAll(".tela").forEach(function(s){ s.classList.toggle("ativa", s.id === id); });
+  document.querySelectorAll(".abas button").forEach(function(b){ b.classList.toggle("ativa", b.dataset.tab === id); });
+  window.scrollTo({top:0, behavior:"auto"});
+  if (id === "tab-corrigir") atualizarPendencias();
+  if (id === "tab-notas") atualizarNotasTabela();
+}
+document.querySelectorAll(".abas button").forEach(function(b){
+  b.addEventListener("click", function(){ abrirAba(b.dataset.tab); });
+});
+
+$("#bt-avancado").addEventListener("click", function(){
+  avancado = !avancado;
+  $("#bt-avancado").textContent = avancado ? "Ocultar disciplina por questão" : "Trocar disciplina por questão";
+  montarGabarito();
+});
+$("#bt-limpar-gab").addEventListener("click", function(){
+  if (!confirm("Apagar todas as respostas do gabarito?")) return;
+  for (var q=0;q<estado.gabarito.length;q++) estado.gabarito[q] = null;
+  montarGabarito(); guardar();
+});
+$("#bt-add-bloco").addEventListener("click", function(){
+  var ult = estado.blocos[estado.blocos.length-1];
+  var inicio = ult ? ult[1]+1 : 1;
+  estado.blocos.push([inicio, inicio+4]);
+  estado.calib = null;
+  montarBlocos(); montarGabarito(); atualizarCalibPill(); guardar();
+});
+$("#bt-blocos-padrao").addEventListener("click", function(){
+  estado.blocos = BLOCOS_PADRAO.map(function(b){ return b.slice(); });
+  estado.calib = null;
+  montarBlocos(); montarGabarito(); atualizarCalibPill(); guardar();
+});
+
+$("#bt-foto-calib").addEventListener("click", function(){ $("#arq-calib").click(); });
+$("#arq-calib").addEventListener("change", function(ev){
+  if (ev.target.files && ev.target.files[0]) iniciarCalibracao(ev.target.files[0]);
+  ev.target.value = "";
+});
+$("#cal-desfazer").addEventListener("click", function(){ if (selCal) selCal.desfazer(); });
+$("#cal-avancar").addEventListener("click", avancarCalibracao);
+$("#cal-recomecar").addEventListener("click", function(){
+  cal.fase = "cantos"; cal.pontos = []; cal.blocoIdx = 0;
+  $("#cal-passo-canvas").classList.add("oculto");
+  $("#cal-passo-foto").classList.remove("oculto");
+});
+
+$("#bt-foto-prova").addEventListener("click", function(){ $("#arq-prova").click(); });
+$("#arq-prova").addEventListener("change", function(ev){
+  if (ev.target.files && ev.target.files[0]) iniciarCorrecao(ev.target.files[0]);
+  ev.target.value = "";
+});
+$("#cor-desfazer").addEventListener("click", function(){ if (selCor) selCor.desfazer(); });
+$("#cor-ler").addEventListener("click", amostrar);
+$("#cor-trocar-foto").addEventListener("click", function(){
+  $("#cor-passo-cantos").classList.add("oculto");
+  $("#cor-passo-foto").classList.remove("oculto");
+});
+$("#bt-refazer-cantos").addEventListener("click", function(){
+  $("#cor-passo-conferencia").classList.add("oculto");
+  $("#cor-passo-cantos").classList.remove("oculto");
+  window.scrollTo({top:0, behavior:"auto"});
+});
+$("#bt-salvar-prova").addEventListener("click", salvarProva);
+
+$("#sl-limiar").addEventListener("input", function(){
+  estado.limiar = parseInt(this.value,10)/100;
+  $("#v-limiar").textContent = this.value + "%";
+  if (cor.valores){ decidir(); montarConferencia(); desenharMapa(); }
+  guardar();
+});
+$("#sl-tol").addEventListener("input", function(){
+  estado.tol = parseInt(this.value,10)/100;
+  $("#v-tol").textContent = this.value + "%";
+  if (cor.valores){ decidir(); montarConferencia(); desenharMapa(); }
+  guardar();
+});
+
+$("#bt-csv").addEventListener("click", exportarCSV);
+$("#bt-limpar-notas").addEventListener("click", function(){
+  if (!estado.provas.length) return;
+  if (!confirm("Apagar as notas de todas as " + estado.provas.length + " provas?")) return;
+  estado.provas = [];
+  guardar(); atualizarNotasTabela();
+});
+
+$("#bt-exportar-config").addEventListener("click", function(){
+  var cfg = {
+    disciplinas: estado.disciplinas, gabarito: estado.gabarito, discQ: estado.discQ,
+    blocos: estado.blocos, calib: estado.calib, limiar: estado.limiar, tol: estado.tol
+  };
+  baixar("configuracao-corretor.json", JSON.stringify(cfg), "application/json");
+});
+$("#bt-importar-config").addEventListener("click", function(){ $("#arq-config").click(); });
+$("#arq-config").addEventListener("change", function(ev){
+  var f = ev.target.files && ev.target.files[0];
+  ev.target.value = "";
+  if (!f) return;
+  var fr = new FileReader();
+  fr.onload = function(){
+    try{
+      var o = JSON.parse(fr.result);
+      ["disciplinas","gabarito","discQ","blocos","calib","limiar","tol"].forEach(function(k){
+        if (o[k] !== undefined) estado[k] = o[k];
+      });
+      montarDisciplinas(); montarBlocos(); montarGabarito(); atualizarCalibPill();
+      sincronizarSliders(); guardar();
+      alert("Configuração carregada.");
+    }catch(e){
+      alert("Esse arquivo não é uma configuração válida do corretor.");
+    }
+  };
+  fr.readAsText(f);
+});
+
+function sincronizarSliders(){
+  $("#sl-limiar").value = String(Math.round(estado.limiar*100));
+  $("#v-limiar").textContent = Math.round(estado.limiar*100) + "%";
+  $("#sl-tol").value = String(Math.round(estado.tol/0.05)*5);
+  $("#v-tol").textContent = Math.round(estado.tol*100) + "%";
+}
+
+/* ---------------------------------------------------------------
+   Início
+--------------------------------------------------------------- */
+restaurar().then(function(){
+  ajustarTamanhos();
+  montarDisciplinas();
+  montarBlocos();
+  montarGabarito();
+  atualizarCalibPill();
+  atualizarNotasTabela();
+  sincronizarSliders();
+  atualizarPendencias();
+});
+</script>
+</body>
+</html>
