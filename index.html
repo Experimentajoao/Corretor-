@@ -126,6 +126,11 @@ details .dentro{padding:0 10px 10px}
 #camBox video,#camBox canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 #camMsg{position:absolute;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));background:rgba(0,0,0,.7);color:#fff;padding:14px 16px;border-radius:14px;font-size:1em;text-align:center;font-weight:700}
 #camMsg.verde{background:rgba(23,130,74,.95)}
+#camMsg.alerta{background:rgba(185,110,0,.95)}
+#camRes{position:absolute;left:12px;right:12px;bottom:56px;background:rgba(255,255,255,.97);border-radius:14px;padding:10px;display:none;color:#18202e;font-size:1em;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.4)}
+#camRes.on{display:block}
+#camRes img{width:100%;border-radius:8px;border:1px solid #ccc;display:block;margin-bottom:6px;background:#fff}
+#camRes b{font-size:1.4em;color:#17824a}
 #camBar{display:flex;gap:8px;padding:10px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:#111}
 #camBar button{flex:1;min-height:58px;border-radius:14px;border:0;background:#2b2f3a;color:#fff;font-size:.85em;font-weight:700;font-family:inherit}
 #camCont{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.65);color:#fff;padding:8px 14px;border-radius:18px;font-size:.8em;font-weight:700}
@@ -148,8 +153,8 @@ canvas#prev{width:100%;border-radius:12px;border:1px solid var(--borda);display:
 <main id="tela"></main>
 
 <div id="cam">
-  <div id="camBox"><video id="video" playsinline muted autoplay></video><canvas id="ov"></canvas><div id="camMsg">Abrindo a câmera…</div><div id="camCont"></div></div>
-  <div id="camBar"><button id="cSair">&#8249; Sair</button><button id="cLuz">Lanterna</button><button id="cFoto">Tirar foto</button></div>
+  <div id="camBox"><video id="video" playsinline muted autoplay></video><canvas id="ov"></canvas><div id="camMsg">Abrindo a câmera…</div><div id="camCont"></div><div id="camRes"></div></div>
+  <div id="camBar"><button id="cSair">&#8249; Sair</button><button id="cDesf" style="display:none">Desfazer o último</button><button id="cLuz">Lanterna</button><button id="cFoto">Tirar foto</button></div>
 </div>
 <input type="file" id="arqFoto" accept="image/*" capture="environment" style="display:none">
 <input type="file" id="arqBackup" accept="application/json,.json" style="display:none">
@@ -418,12 +423,14 @@ function acharCartao(id){
   return H;
 }
 // câmera ao vivo no Android: pede uma foto de verdade (mais nítida que o vídeo) só para o recorte do nome
-async function nomeDaFoto(){
+async function nomeDaFoto(esperado){
   try{if(!cam.track||typeof ImageCapture==='undefined'||cam.track.readyState!=='live')return null;
-    const blob=await new ImageCapture(cam.track).takePhoto();const bmp=await createImageBitmap(blob);
+    const p=prova();const blob=await new ImageCapture(cam.track).takePhoto();const bmp=await createImageBitmap(blob);
     const sc=Math.min(1,2400/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);
     const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,c.width,c.height);const id=x.getImageData(0,0,c.width,c.height);
-    const H=acharCartao(id);return H?recorte(id,H):null}catch(e){return null}
+    const R2=await trabalho('ler',new Uint8ClampedArray(id.data),id.width,id.height,provaLeve(p));
+    if(!R2||!R2.ok||!esperado||R2.resp.some((v,i)=>v!==esperado[i]))return null;
+    return recorte(id,R2.H)}catch(e){return null}
 }
 function retifica(id,H,esc){
   const W=Math.round(210*esc),Hh=Math.round(297*esc),c=document.createElement('canvas');c.width=W;c.height=Hh;
@@ -551,7 +558,7 @@ $('#bAjuda').onclick=()=>{const a=AJUDA[atual.tela]||AJUDA.inicio;aviso('Ajuda',
 window.addEventListener('popstate',()=>{});
 function render(){
   window.scrollTo(0,0);
-  if(cam.stream&&!['revisao','revGab','salvo'].includes(atual.tela))fecharCamera();
+  if(cam.stream&&!cam.manter&&!['revisao','revGab','salvo'].includes(atual.tela))fecharCamera();cam.manter=false;
   $('#bVoltar').style.visibility=atual.tela==='inicio'?'hidden':'visible';
   TELAS[atual.tela](atual.arg);
 }
@@ -565,7 +572,7 @@ const AJUDA={
  config:'Mude o que precisar e toque em <b>Salvar</b> no final da tela.',
  cartao:'Baixe o PDF e imprima uma folha para cada aluno, ou imprima uma e tire xerox. Os 4 quadrados pretos dos cantos precisam sair inteiros na folha.',
  gabarito:'Para cada questão, toque na letra certa. A letra fica azul. Se errou, toque em outra letra. <b>Anular</b> dá a questão como certa para todos os alunos.',
- revisao:'O app já leu o cartão. Confira as questões em amarelo, que são as que ficaram em dúvida. Para trocar uma resposta, toque na letra certa. Depois toque em <b>Está certo, salvar</b>.',
+ revisao:'O app abriu esta tela porque ficou em dúvida em alguma questão. Confira as questões em amarelo, que são as que ficaram em dúvida. Para trocar uma resposta, toque na letra certa. Depois toque em <b>Está certo, salvar</b>.',
  revGab:'O app leu as respostas certas do cartão. Confira e toque em <b>Usar este gabarito</b>.',
  salvo:'O cartão foi guardado. Toque em <b>Corrigir o próximo cartão</b> para continuar.',
  notas:'Aqui estão as notas de todos os alunos já corrigidos. Toque numa linha para ver ou consertar a correção daquele aluno. <b>Baixar planilha</b> cria um arquivo que abre no Excel ou no Google Planilhas.',
@@ -625,6 +632,8 @@ TELAS.inicio=()=>{
     <button class="btn sec peq" id="bRec">${IC.receber} Receber prova de um colega</button>
     <button class="btn sec peq" id="bNova">${IC.mais} Montar uma prova diferente</button>
     <button class="btn sec peq" id="bTuto">Ver como funciona</button>
+    <label>Conferir cada cartão antes de salvar</label><p class="muted" style="margin-top:0">Com "Não", o app salva sozinho os cartões lidos sem dúvida e já espera o próximo. Com "Sim", ele mostra a conferência de todos.</p>
+    <div class="chips"><button id="cfN" class="${DB.cfg.conferirTodos?'':'on'}">Não</button><button id="cfS" class="${DB.cfg.conferirTodos?'on':''}">Sim</button></div>
     <label>Tamanho da letra</label><div class="chips"><button id="lN" class="${DB.cfg.letraGrande?'':'on'}">Normal</button><button id="lG" class="${DB.cfg.letraGrande?'on':''}" style="font-size:1.2em">Grande</button></div>
     <label>Cópia de segurança</label><p class="muted" style="margin-top:0">As correções ficam guardadas só neste celular. A cópia guarda as notas, mas não as fotos dos nomes.</p>
     <button class="btn sec peq" id="bBkp">${IC.baixar} Baixar cópia</button><button class="btn sec peq" id="bRest">Restaurar uma cópia</button></div></details>`;
@@ -637,6 +646,7 @@ TELAS.inicio=()=>{
   $('#bNova').onclick=()=>{const p=novaProva();p.nome='';ir('assist',{passo:0,p})};
   $('#bTuto').onclick=()=>ir('tutorial',{i:0});
   $('#bRec').onclick=()=>ir('receber',{});
+  $('#cfN').onclick=()=>{DB.cfg.conferirTodos=false;salvar();render()};$('#cfS').onclick=()=>{DB.cfg.conferirTodos=true;salvar();render()};
   $('#lN').onclick=()=>{DB.cfg.letraGrande=false;salvar();aplicaLetra();render()};
   $('#lG').onclick=()=>{DB.cfg.letraGrande=true;salvar();aplicaLetra();render()};
   $('#bBkp').onclick=()=>baixar(new Blob([JSON.stringify(DB)],{type:'application/json'}),'corretor-copia-'+new Date().toISOString().slice(0,10)+'.json');
@@ -909,16 +919,46 @@ TELAS.gabarito=()=>{
 
 
 /* ============ câmera ============ */
-let cam={stream:null,modo:null,rodando:false,est:0,ult:null,armado:true,perdido:0,track:null,luz:false,falhou:false};
+let cam={stream:null,modo:null,rodando:false,est:0,ult:null,armado:true,perdido:0,track:null,luz:false,falhou:false,ocupado:false,lendo:false,manter:false,ultimo:null,pausa:0};
 const video=$('#video'),ov=$('#ov'),cMsg=$('#camMsg');
 const peq=document.createElement('canvas'),peqx=peq.getContext('2d',{willReadFrequently:true});
 const grande=document.createElement('canvas'),grandex=grande.getContext('2d',{willReadFrequently:true});
 function podeAoVivo(){return !cam.falhou&&!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&window.isSecureContext!==false&&window.self===window.top}
+// modo contínuo: leitura sem dúvida é salva sozinha e a câmera já espera o próximo cartão
+function modoContinuo(){return cam.modo==='corrigir'&&!DB.cfg.conferirTodos}
+
+/* ---- leitura em segundo plano (Web Worker), para a câmera não travar ---- */
+// só procura o cartão num quadro pequeno; confirma pela faixa preta do topo que é mesmo o cartão
+function detectarRapido(d,w,h){
+  const g=toGray({data:d,width:w,height:h}),q=detectMarkers(g,w,h);if(!q)return null;
+  const pts=q.map(c=>[c.x,c.y]);let H=homografia(MK,pts),ok=!!(H&&barraOk(g,w,h,H));
+  if(!ok){const r=[pts[3],pts[2],pts[1],pts[0]];H=homografia(MK,r);ok=!!(H&&barraOk(g,w,h,H))}
+  const[a,b,c,e]=q;const area=Math.abs((e.x-a.x)*(b.y-c.y)-(b.x-c.x)*(e.y-a.y))/2;
+  return{q:q.map(c=>({x:c.x,y:c.y})),ok,frac:area/(w*h)};
+}
+let LEITOR=null;const pend={};let seqL=0;
+function criaLeitor(){
+  try{const fns=[toGray,downscale,detectMarkers,ordena,dist,pontua,refina,homografia,aplica,amostra,mediaCirculo,barraOk,decide,escuro,processa,layout,detectarRapido];
+    const consts=`const MK=${JSON.stringify(MK)},MKS=${MKS},BAR=${JSON.stringify(BAR)},HDR=${HDR},MAREA=${JSON.stringify(MAREA)},XAREA=${JSON.stringify(XAREA)},LIM=${LIM},FAIXA=${FAIXA};\n`;
+    const src=consts+fns.map(f=>f.toString()).join('\n')+`
+onmessage=e=>{const m=e.data;let r;try{r=m.t==='det'?detectarRapido(m.d,m.w,m.h):processa({data:m.d,width:m.w,height:m.h},m.p)}catch(x){r=m.t==='det'?null:{ok:false,msg:'erro'}}postMessage({n:m.n,r})};`;
+    const wk=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+    wk.onmessage=e=>{const f=pend[e.data.n];delete pend[e.data.n];if(f)f(e.data.r)};
+    wk.onerror=()=>{LEITOR=false};return wk}catch(e){return false}
+}
+// manda o trabalho para o worker; se não houver worker, faz aqui mesmo
+function trabalho(t,d,w,h,p){
+  if(LEITOR===null)LEITOR=criaLeitor();
+  if(!LEITOR)return Promise.resolve(t==='det'?detectarRapido(d,w,h):processa({data:d,width:w,height:h},p));
+  return new Promise(res=>{const n=++seqL;pend[n]=res;const buf=d.buffer;LEITOR.postMessage({t,n,d,w,h,p},[buf])});
+}
+function provaLeve(p){return{nQ:p.nQ,nAlt:p.nAlt,area:p.area,disc:p.disc}}
+
 // ponto de entrada: câmera ao vivo quando dá; senão, a câmera do próprio celular (foto)
 function corrigirCartao(modo){cam.modo=modo;if(podeAoVivo())abrirCamera(modo);else $('#arqFoto').click()}
-function msg(t,v){cMsg.textContent=t;cMsg.classList.toggle('verde',!!v)}
+function msg(t,v){cMsg.textContent=t;cMsg.classList.toggle('verde',v===true);cMsg.classList.toggle('alerta',v==='alerta')}
 async function abrirCamera(modo){
-  cam.modo=modo;cam.armado=true;cam.est=0;cam.ult=null;
+  cam.modo=modo;cam.armado=true;cam.est=0;cam.ult=null;cam.lendo=false;
   $('#cam').classList.add('on');atualizaCont();msg('Abrindo a câmera…');
   if(!cam.stream){
     try{cam.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false})}
@@ -930,13 +970,16 @@ async function abrirCamera(modo){
     try{const cp=cam.track.getCapabilities&&cam.track.getCapabilities();$('#cLuz').style.display=cp&&cp.torch?'':'none';
       if(cp&&cp.focusMode&&cp.focusMode.includes('continuous'))cam.track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){$('#cLuz').style.display='none'}
   }
-  cam.rodando=true;msg('Mostre o cartão inteiro, com os 4 quadrados pretos');laco();
+  if(!cam.rodando){cam.rodando=true;msg('Mostre o cartão inteiro, com os 4 quadrados pretos');laco()}
 }
-function fecharCamera(){cam.rodando=false;$('#cam').classList.remove('on');if(cam.stream){cam.stream.getTracks().forEach(t=>t.stop());cam.stream=null;video.srcObject=null}cam.luz=false}
-function atualizaCont(){const p=prova();$('#camCont').textContent=cam.modo==='gabarito'?'Lendo o gabarito':(p?p.res.length+' corrigidos':'')}
+function fecharCamera(){cam.rodando=false;$('#cam').classList.remove('on');if(cam.stream){cam.stream.getTracks().forEach(t=>t.stop());cam.stream=null;video.srcObject=null}cam.luz=false;cam.ultimo=null;$('#cDesf').style.display='none'}
+function atualizaCont(){const p=prova();$('#camCont').textContent=cam.modo==='gabarito'?'Lendo o gabarito':(p?p.res.length+(p.res.length===1?' corrigido':' corrigidos'):'')}
 $('#cSair').onclick=()=>{fecharCamera();render()};
 $('#cLuz').onclick=()=>{if(!cam.track)return;cam.luz=!cam.luz;cam.track.applyConstraints({advanced:[{torch:cam.luz}]}).catch(()=>toast('Lanterna indisponível'))};
 $('#cFoto').onclick=()=>$('#arqFoto').click();
+$('#cDesf').onclick=async()=>{const p=prova();if(!p||!cam.ultimo)return;const r=p.res.find(x=>x.id===cam.ultimo);if(!r)return;
+  cam.rodando=false;const ok=await pergunta('Apagar a última correção salva?','Sim, apagar');cam.rodando=true;laco();
+  if(!ok)return;p.res=p.res.filter(x=>x.id!==r.id);IDB.del(r.id);salvar();cam.ultimo=null;$('#cDesf').style.display='none';atualizaCont();toast('A última correção foi apagada')};
 $('#arqFoto').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;carregando(true,'Lendo o cartão…');
   const img=new Image();const url=URL.createObjectURL(f);
   img.onerror=()=>{carregando(false);URL.revokeObjectURL(url);mostraFalha()};
@@ -946,28 +989,61 @@ $('#arqFoto').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)ret
     if(!R.ok){mostraFalha();return}bip();lido(R,id)}catch(x){carregando(false);mostraFalha()}},30)};
   img.src=url};
 function mostraFalha(){fecharCamera();ir('falha',{})}
+
+/* ---- laço da câmera ao vivo ---- */
 function laco(){
   if(!cam.rodando)return;
-  if(video.readyState>=2&&video.videoWidth){
+  if(!cam.ocupado&&!cam.lendo&&Date.now()>cam.pausa&&video.readyState>=2&&video.videoWidth){
     const vw=video.videoWidth,vh=video.videoHeight,f=Math.max(vw,vh)/720;
     peq.width=Math.round(vw/f);peq.height=Math.round(vh/f);peqx.drawImage(video,0,0,peq.width,peq.height);
-    const id=peqx.getImageData(0,0,peq.width,peq.height);const q=detectMarkers(toGray(id),peq.width,peq.height);
-    desenhaOv(q,f,vw,vh);
-    if(q){
-      if(!cam.armado){msg('Agora mostre o próximo cartão');cam.perdido=0}
-      else{const tol=Math.max(peq.width,peq.height)*0.012;
-        const est=cam.ult&&q.every((c,i)=>Math.hypot(c.x-cam.ult[i].x,c.y-cam.ult[i].y)<tol);
-        cam.est=est?cam.est+1:1;cam.ult=q;
-        msg('Achei o cartão! Segure parado…',true);
-        if(cam.est>=3){
-          grande.width=vw;grande.height=vh;grandex.drawImage(video,0,0);const big=grandex.getImageData(0,0,vw,vh);const R=processa(big,prova());
-          if(R.ok){cam.est=0;cam.armado=false;bip();cam.rodando=false;$('#cam').classList.remove('on');lido(R,big);return}
-        }}
-    }else{cam.est=0;cam.ult=null;if(!cam.armado){cam.perdido++;if(cam.perdido>=2)cam.armado=true}
-      msg(cam.armado?'Mostre o cartão inteiro, com os 4 quadrados pretos':'Agora mostre o próximo cartão')}
+    const id=peqx.getImageData(0,0,peq.width,peq.height);cam.ocupado=true;
+    trabalho('det',id.data,peq.width,peq.height).then(r=>{cam.ocupado=false;if(cam.rodando)aoDetectar(r,f,vw,vh)});
   }
-  setTimeout(()=>requestAnimationFrame(laco),90);
+  requestAnimationFrame(laco);
 }
+function aoDetectar(r,f,vw,vh){
+  const valido=r&&r.ok;
+  desenhaOv(valido?r.q:null,f,vw,vh);
+  if(!valido){cam.est=0;cam.ult=null;
+    if(!cam.armado){cam.perdido++;if(cam.perdido>=3)cam.armado=true}
+    msg(cam.armado?'Mostre o cartão inteiro, com os 4 quadrados pretos':'Agora mostre o próximo cartão');return}
+  if(!cam.armado){msg('Agora mostre o próximo cartão');cam.perdido=0;return}
+  // resolução do cartão na foto que será lida: pede para aproximar se as bolinhas ficariam pequenas demais
+  {const[tl,tr,bl,br]=r.q,hp=(Math.hypot(tl.x-bl.x,tl.y-bl.y)+Math.hypot(tr.x-br.x,tr.y-br.y))/2*f;if(hp/273<1.6){cam.est=0;msg('Aproxime mais o celular do cartão');return}}
+  const tol=Math.max(peq.width,peq.height)*0.008,q=r.q;
+  const est=cam.ult&&q.every((c,i)=>Math.hypot(c.x-cam.ult[i].x,c.y-cam.ult[i].y)<tol);
+  cam.est=est?cam.est+1:1;cam.ult=q;msg('Achei o cartão! Segure parado…',true);
+  if(cam.est>=2)capturar(vw,vh);
+}
+function capturar(vw,vh){
+  cam.lendo=true;cam.est=0;
+  grande.width=vw;grande.height=vh;grandex.drawImage(video,0,0);const big=grandex.getImageData(0,0,vw,vh);
+  const copia=new Uint8ClampedArray(big.data);
+  trabalho('ler',copia,vw,vh,provaLeve(prova())).then(R=>{
+    if(!cam.rodando){cam.lendo=false;return}
+    if(!R||!R.ok){cam.lendo=false;return}
+    cam.armado=false;cam.perdido=0;posLeitura(R,big);cam.lendo=false;
+  });
+}
+// depois de ler: salva sozinho quando não há dúvida; senão, abre a conferência
+function posLeitura(R,id){
+  const p=prova();
+  if(p&&p.area&&R.area&&R.area!==p.area){aviso2('Este cartão é da prova de '+AREAS[R.area].nome,'alerta');return}
+  const A=ativas(p),temDuv=A.some(i=>R.duv[i]);
+  if(!modoContinuo()||temDuv){bip();cam.rodando=false;$('#cam').classList.remove('on');lido(R,id);return}
+  const igual=p.res.find(r=>r.resp.length===R.resp.length&&r.resp.every((v,i)=>v===R.resp[i]));
+  if(igual){aviso2('Este cartão já foi salvo. Mostre o próximo.','alerta');return}
+  let ass=null;try{ass=recorte(id,R.H)}catch(e){}
+  const rid=uid();p.res.push({id:rid,resp:R.resp.slice(),data:Date.now()});p.usada=Date.now();salvar();if(ass)IDB.put(rid,ass);
+  cam.ultimo=rid;$('#cDesf').style.display='';atualizaCont();bip();
+  const c=corrigir(p,R.resp);
+  mostraResultado(ass,c.disc.map(x=>`${c.disc.length>1?esc(x.nome)+' ':''}<b>${fmt(x.nota)}</b>`).join(' · '));
+  nomeDaFoto(R.resp).then(u=>{if(u&&p.res.some(r=>r.id===rid))IDB.put(rid,u)});
+}
+function aviso2(t,tipo){msg(t,tipo);cam.pausa=Date.now()+1800;const r=$('#camRes');r.classList.remove('on')}
+function mostraResultado(ass,txt){const r=$('#camRes');r.innerHTML=`${ass?`<img src="${ass}" alt="Nome do aluno">`:''}<div>Salvo · ${txt}</div>`;r.classList.add('on');
+  msg('Salvo! Agora mostre o próximo cartão',true);clearTimeout(r._t);r._t=setTimeout(()=>r.classList.remove('on'),2200)}
+
 function desenhaOv(q,f,vw,vh){
   const dpr=window.devicePixelRatio||1,cw=ov.clientWidth,ch=ov.clientHeight;
   if(ov.width!==Math.round(cw*dpr)){ov.width=Math.round(cw*dpr);ov.height=Math.round(ch*dpr)}
@@ -991,7 +1067,7 @@ function lido(R,id){
   const dados={resp:R.resp.slice(),duv:R.duv.slice(),img,ass};
   if(atual&&(atual.tela==='falha'))pilha.length&&(atual=pilha.pop());
   ir(cam.modo==='gabarito'?'revGab':'revisao',dados);
-  if(cam.modo!=='gabarito'&&cam.stream)nomeDaFoto().then(u=>{if(!u)return;dados.ass=u;const im=$('#assImg');if(im&&atual&&atual.arg===dados)im.src=u});
+  if(cam.modo!=='gabarito'&&cam.stream)nomeDaFoto(R.resp).then(u=>{if(!u)return;dados.ass=u;const im=$('#assImg');if(im&&atual&&atual.arg===dados)im.src=u});
 }
 
 /* ---- não consegui ler ---- */
@@ -1067,6 +1143,8 @@ function telaRevisao(d,modoGab){
       const op=await janela('Este cartão já foi corrigido?',`As respostas são iguais às de um cartão que você já salvou${im?':<img class="ass" style="margin-top:8px" src="'+im+'">':'.'}`,[{t:'Já corrigi, descartar este',cls:''},{t:'É outro aluno, salvar',cls:'sec'}]);
       if(op===0){pilha.pop();atual={tela:'salvo',arg:{resp:igual.resp,ass:im,repetido:true}};render();return}}
     const rid=uid();p.res.push({id:rid,resp:resp.slice(),data:Date.now()});p.usada=Date.now();salvar();if(d.ass)IDB.put(rid,d.ass);
+    if(modoContinuo()&&cam.stream){const c=corrigir(p,resp);cam.manter=true;voltar();abrirCamera('corrigir');cam.ultimo=rid;$('#cDesf').style.display='';atualizaCont();
+      mostraResultado(d.ass,c.disc.map(x=>`${c.disc.length>1?esc(x.nome)+' ':''}<b>${fmt(x.nota)}</b>`).join(' · '));return}
     while(pilha.length&&pilha[pilha.length-1].tela==='salvo')pilha.pop();atual={tela:'salvo',arg:{resp:resp.slice(),ass:d.ass}};render();
   };
   $('#bSalvarR').onclick=salvarR;if($('#bSalvarR2'))$('#bSalvarR2').onclick=salvarR;
