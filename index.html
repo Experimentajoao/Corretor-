@@ -211,7 +211,7 @@ const MKS=10;
 const BAR={x:24,y:8.5,w:50,h:3.5};
 const HDR=7;
 const MAREA=['mat','ling','hum'],XAREA=[80,86,92]; // quadradinhos que identificam a área do cartão
-const ASS={x:23,y:31,w:90,h:13}; // área do nome do aluno no cartão (mm)
+const ASS={x:23,y:31,w:164,h:14}; // área do nome do aluno no cartão (mm)
 function layout(p){
   const nQ=p.nQ,nA=p.nAlt,d=4.8,sp=6.6,rowH=7.0,top=62,bot=279,x0=17,x1=193;
   const maxRows=Math.floor((bot-top)/rowH);
@@ -229,9 +229,8 @@ function layout(p){
     const alts=[];for(let k=0;k<nA;k++)alts.push([cx0+9+sp*k+sp/2,cy]);
     qs.push({q,c,r,cx0,cy,alts,colW});
   }
-  const num=[];for(let row=0;row<2;row++){const y=[35,44][row];const a=[];for(let k=0;k<10;k++)a.push([131+6.6*k,y]);num.push(a)}
   const heads=[];if(p.area)for(const d of p.disc){const Q=qs[d.de-1];if(Q)heads.push({nome:d.nome,de:d.de,ate:d.ate,x:Q.cx0,y:Q.cy-rowH/2-HDR,w:colW})}
-  return{qs,num,d,rowH,colW,heads,maxQ:maxCols*maxRows};
+  return{qs,d,rowH,colW,heads,maxQ:maxCols*maxRows};
 }
 function maxQuestoes(nAlt){return layout({nQ:1,nAlt}).maxQ}
 
@@ -245,30 +244,28 @@ function cardSVG(p,fill){
   s+=`<text x="24" y="21.5" font-size="5" font-weight="700">CARTÃO-RESPOSTA</text>`;
   s+=`<text x="24" y="27.5" font-size="3.4">${esc((p.nome||'').slice(0,48))}${p.turma?' · '+esc(p.turma.slice(0,20)):''}</text>`;
   s+=`<text x="${ASS.x+1}" y="${ASS.y+3.2}" font-size="2.6" fill="#555">Nome do aluno (escreva com letra legível)</text><rect x="${ASS.x}" y="${ASS.y}" width="${ASS.w}" height="${ASS.h}" rx="1" fill="none" stroke="#000" stroke-width="0.3"/>`;
-  if(fill&&fill.nome)s+=`<text x="${ASS.x+4}" y="${ASS.y+10}" font-size="5.5" font-family="cursive" fill="#1b2a6b">${esc(fill.nome)}</text>`;
-  s+=`<text x="24" y="50.2" font-size="3.3">Turma:</text><line x1="36" y1="50.8" x2="68" y2="50.8" stroke="#000" stroke-width="0.25"/>`;
-  s+=`<text x="72" y="50.2" font-size="3.3">Data:</text><line x1="81" y1="50.8" x2="111" y2="50.8" stroke="#000" stroke-width="0.25"/>`;
-  s+=`<rect x="115" y="24" width="80" height="26" rx="2" fill="none" stroke="#000" stroke-width="0.3"/>`;
-  s+=`<text x="155" y="28.6" font-size="3" font-weight="700" text-anchor="middle">Nº DE CHAMADA</text>`;
-  const rot=['Dezena','Unidade'];
-  L.num.forEach((row,ri)=>{s+=`<text x="117" y="${row[0][1]+1}" font-size="2.6">${rot[ri]}</text>`;
-    row.forEach(([x,y],k)=>{s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#000" stroke-width="0.28"/><text x="${x}" y="${y+0.95}" font-size="2.7" text-anchor="middle" fill="#8c8c8c">${k}</text>`;
-      if(fill&&fill.num&&fill.num[ri]===k)s+=marca(x,y,fill,ri*10+k);});
-  });
+  if(fill&&fill.nome)s+=`<text x="${ASS.x+4}" y="${ASS.y+10}" font-size="6" font-family="cursive" fill="#1b2a6b">${esc(fill.nome)}</text>`;
+  s+=`<text x="24" y="51" font-size="3.3">Turma:</text><line x1="36" y1="51.6" x2="80" y2="51.6" stroke="#000" stroke-width="0.25"/>`;
+  s+=`<text x="90" y="51" font-size="3.3">Data:</text><line x1="99" y1="51.6" x2="140" y2="51.6" stroke="#000" stroke-width="0.25"/>`;
   for(const H of L.heads)s+=`<text x="${H.x}" y="${H.y+4.6}" font-size="3.4" font-weight="700">${esc(H.nome.toUpperCase())}</text><text x="${H.x+H.w}" y="${H.y+4.6}" font-size="2.6" text-anchor="end" fill="#555">${H.de} a ${H.ate}</text><line x1="${H.x}" y1="${H.y+6}" x2="${H.x+H.w}" y2="${H.y+6}" stroke="#000" stroke-width="0.3"/>`;
-  s+=`<text x="24" y="56" font-size="2.9">Pinte todo o círculo com caneta preta ou azul escura. Não rasure. Duas marcações anulam a questão.</text>`;
+  s+=`<text x="24" y="57.5" font-size="2.9">Pinte todo o círculo com caneta preta ou azul escura. Não rasure. Duas marcações anulam a questão.</text>`;
   for(const Q of L.qs){
     const yTop=Q.cy-L.rowH/2;
     if(Q.r%2===1)s+=`<rect x="${Q.cx0-1}" y="${yTop}" width="${Q.colW+2}" height="${L.rowH}" fill="#f0f0f0"/>`;
     s+=`<text x="${Q.cx0+7.6}" y="${Q.cy+1.15}" font-size="3.2" font-weight="700" text-anchor="end">${String(Q.q+1).padStart(2,'0')}</text>`;
     Q.alts.forEach(([x,y],k)=>{s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#000" stroke-width="0.28"/><text x="${x}" y="${y+0.95}" font-size="2.7" text-anchor="middle" fill="#8c8c8c">${LET[k]}</text>`;
-      if(fill&&fill.resp){const v=fill.resp[Q.q];if(v===k||(Array.isArray(v)&&v.includes(k)))s+=marca(x,y,fill,Q.q*7+k)}});
+      if(fill&&fill.resp){const v=fill.resp[Q.q];if(v===k||(Array.isArray(v)&&v.includes(k)))s+=marca(x,y,fill,Q.q*7+k,fill.estilo&&fill.estilo[Q.q],Array.isArray(v)&&v[1]===k)}});
   }
   s+='</svg>';return s;
 }
 // usado só nos testes: simula uma marca de caneta
-function marca(x,y,fill,seed){const j=t=>((Math.sin(seed*12.9898+t*78.233)*43758.5453)%1+1)%1;
-  const dx=(j(1)-.5)*0.8,dy=(j(2)-.5)*0.8,rr=1.7+j(3)*0.6;return `<circle cx="${x+dx}" cy="${y+dy}" r="${rr}" fill="${fill.cor||'#1b2a6b'}" opacity="${fill.op||0.92}"/>`}
+function marca(x,y,fill,seed,estilo,segunda){const j=t=>((Math.sin(seed*12.9898+t*78.233)*43758.5453)%1+1)%1;
+  const dx=(j(1)-.5)*0.8,dy=(j(2)-.5)*0.8,rr=1.7+j(3)*0.6,cor=fill.cor||'#1b2a6b';
+  if(estilo==='x')return `<path d="M${x-1.8} ${y-1.8}L${x+1.8} ${y+1.8}M${x+1.8} ${y-1.8}L${x-1.8} ${y+1.8}" stroke="${cor}" stroke-width="0.6"/>`;
+  if(estilo==='fraca')return `<circle cx="${x+dx}" cy="${y+dy}" r="${rr}" fill="${cor}" opacity="0.4"/>`;
+  if(estilo==='pequena')return `<circle cx="${x+dx}" cy="${y+dy}" r="1.1" fill="${cor}"/>`;
+  if(estilo==='rasura'&&segunda)return `<circle cx="${x+dx}" cy="${y+dy}" r="${rr}" fill="#777" opacity="0.25"/>`;
+  return `<circle cx="${x+dx}" cy="${y+dy}" r="${rr}" fill="${cor}" opacity="${fill.op||0.92}"/>`}
 
 /* ============ visão computacional ============ */
 function toGray(id){const d=id.data,n=id.width*id.height,g=new Uint8Array(n);for(let i=0,j=0;i<n;i++,j+=4)g[i]=(d[j]*77+d[j+1]*150+d[j+2]*29)>>8;return g}
@@ -380,16 +377,10 @@ function processa(id,p){
     if(esc.filter(Boolean).length===1)areaLida=MAREA[esc.indexOf(true)]}
   const L=layout(p),rs=L.d/2*0.62;
   const Dq=L.qs.map(Q=>Q.alts.map(([x,y])=>escuro(g,w,h,H,x,y,rs,Q.r%2===1)));
-  const Dn=L.num.map(row=>row.map(([x,y])=>escuro(g,w,h,H,x,y,rs,false)));
-  const todos=Dq.flat().concat(Dn.flat()).sort((a,b)=>a-b),b0=todos[Math.floor(todos.length*0.25)];
+  const todos=Dq.flat().sort((a,b)=>a-b),b0=todos[Math.floor(todos.length*0.25)];
   const resp=[],duv=[];
   for(const d of Dq){const D=decide(d.map(v=>v-b0));resp.push(D.r);duv.push(D.duv)}
-  const dig=Dn.map(d=>decide(d.map(v=>v-b0)));
-  let num=null,numDuv=dig[0].duv||dig[1].duv;
-  if(dig[1].r>=0&&dig[0].r!==-2){num=(dig[0].r>=0?dig[0].r:0)*10+dig[1].r;if(num===0)num=null}
-  else if(dig[0].r>=0&&dig[1].r===-1){num=null;numDuv=true}
-  if(dig[0].r===-2||dig[1].r===-2)numDuv=true;
-  return{ok:true,H,pts,resp,duv,num,numDuv,area:areaLida};
+  return{ok:true,H,pts,resp,duv,area:areaLida};
 }
 function recorte(id,H,R,ppm){
   const W=Math.round(R.w*ppm),Hh=Math.round(R.h*ppm),c=document.createElement('canvas');c.width=W;c.height=Hh;
@@ -403,7 +394,13 @@ function recorte(id,H,R,ppm){
   for(let y=0;y<Hh;y++)for(let x=0;x<W;x+=4){let m=0;const x0=Math.max(0,x-bs),x1=Math.min(W-1,x+bs),y0=Math.max(0,y-bs),y1=Math.min(Hh-1,y+bs);
     const vs=[];for(let yy=y0;yy<=y1;yy+=3)for(let xx=x0;xx<=x1;xx+=3)vs.push(gs[yy*W+xx]);vs.sort((a,b)=>a-b);m=vs[Math.floor(vs.length*0.85)];for(let k=0;k<4&&x+k<W;k++)bg[y*W+x+k]=m}
   for(let i=0;i<W*Hh;i++){let v=gs[i]/Math.max(bg[i],1);v=v>0.86?255:Math.max(0,(v-0.35)/0.51)*235;o[i*4]=o[i*4+1]=o[i*4+2]=Math.max(0,Math.min(255,v))}
-  cx.putImageData(out,0,0);return c.toDataURL('image/jpeg',0.75);
+  cx.putImageData(out,0,0);
+  // corta o espaço vazio à direita e a legenda do topo, para o nome aparecer grande
+  const y0=Math.round(4.2*ppm),y1=Hh-Math.round(1.2*ppm),x0=Math.round(1.2*ppm);let dir=0;
+  for(let x=x0;x<W-Math.round(1*ppm);x++){let n=0;for(let y=y0;y<y1;y++)if(o[(y*W+x)*4]<120)n++;if(n>=2)dir=x}
+  const wf=Math.min(W,Math.max(Math.round(70*ppm),dir+Math.round(4*ppm))),hf=y1-y0;
+  const c2=document.createElement('canvas');c2.width=wf;c2.height=hf;const x2=c2.getContext('2d');x2.fillStyle='#fff';x2.fillRect(0,0,wf,hf);x2.drawImage(c,x0+2,y0,wf-x0-2,hf,0,0,wf-x0-2,hf);
+  return c2.toDataURL('image/jpeg',0.75);
 }
 function retifica(id,H,esc){
   const W=Math.round(210*esc),Hh=Math.round(297*esc),c=document.createElement('canvas');c.width=W;c.height=Hh;
@@ -455,14 +452,14 @@ function baixarDireto(blob,nome){const a=document.createElement('a');a.href=URL.
 function tabela(p,sep,csv){
   const q=v=>{v=String(v==null?'':v);return csv&&/[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
   const A=ativas(p),DA=discAtivas(p);
-  const cab=['Nº','Nome',...DA.map(d=>d.nome+' (vale '+fmt(d.valor)+')'),'Acertos','Respostas'];
+  const cab=['Ordem',...DA.map(d=>d.nome+' (vale '+fmt(d.valor)+')'),'Acertos','Respostas'];
   const L=[cab.map(q).join(sep)];
-  for(const r of ordenaRes(p.res)){const c=corrigir(p,r.resp);
-    L.push([r.num||'',nomeAluno(p,r.num),...c.disc.map(x=>fmt(x.nota)),c.ac+' de '+A.length,A.map(i=>{const v=r.resp[i];return v>=0?LET[v]:v===-2?'*':'-'}).join('')].map(q).join(sep))}
-  L.push(['Gabarito','',...DA.map(()=>''),'',A.map(i=>{const v=p.gab[i];return v>=0?LET[v]:v===-3?'X':'-'}).join('')].map(q).join(sep));
+  ordenaRes(p.res).forEach((r,ix)=>{const c=corrigir(p,r.resp);
+    L.push([ix+1,...c.disc.map(x=>fmt(x.nota)),c.ac+' de '+A.length,A.map(i=>{const v=r.resp[i];return v>=0?LET[v]:v===-2?'*':'-'}).join('')].map(q).join(sep))});
+  L.push(['Gabarito',...DA.map(()=>''),'',A.map(i=>{const v=p.gab[i];return v>=0?LET[v]:v===-3?'X':'-'}).join('')].map(q).join(sep));
   return L.join('\r\n');
 }
-function ordenaRes(res){return res.slice().sort((a,b)=>(a.num||999)-(b.num||999)||a.data-b.data)}
+function ordenaRes(res){return res.slice().sort((a,b)=>a.data-b.data)}
 
 
 
@@ -571,7 +568,7 @@ if('serviceWorker' in navigator&&location.protocol==='https:'&&window.self===win
 /* ---- tutorial ---- */
 const TUTO=[
  [DES.cartao,'1. Imprima o cartão-resposta','O app cria o cartão da sua prova. Imprima uma folha para cada aluno.'],
- [DES.pintar,'2. O aluno pinta a bolinha','Cada aluno pinta a bolinha da resposta, com caneta preta ou azul, e marca o número de chamada.'],
+ [DES.pintar,'2. O aluno pinta a bolinha','Cada aluno escreve o nome e pinta a bolinha da resposta, com caneta preta ou azul.'],
  [DES.fotografar,'3. Aponte o celular para o cartão','O app reconhece o cartão pelos 4 quadrados pretos e corrige sozinho.'],
  [DES.pronto,'4. As notas ficam prontas','Veja a nota de cada aluno, por disciplina, e baixe a planilha.']
 ];
@@ -647,8 +644,6 @@ TELAS.turmaSel=a=>{
   const vai=t=>{t=(t||'').trim();
     let p=DB.provas.find(x=>x.area===a.ar&&x.so===a.so&&(x.turma||'')===t&&!x.recebida);
     if(!p){p=provaArea(a.ar,a.so);p.turma=t;
-      // aproveita o gabarito já marcado em outra turma da mesma prova
-      const irma=DB.provas.find(x=>x.area===a.ar&&x.gab.some(v=>v!==-1));if(irma)ativas(p).forEach(i=>{if(irma.gab[i]!==-1)p.gab[i]=irma.gab[i]});
       DB.provas.push(p)}
     p.usada=Date.now();DB.ativa=p.id;salvar();irInicioProva()};
   document.querySelectorAll('#tChips button').forEach(b=>b.onclick=()=>vai(b.dataset.t));
@@ -759,13 +754,12 @@ function ajustaNQ(t,v){t.nQ=v;
 
 /* ---- assistente de nova prova ---- */
 TELAS.assist=a=>{
-  const t=a.p,N=5,i=a.passo;titulo('Nova prova');
+  const t=a.p,N=4,i=a.passo;titulo('Nova prova');
   let h=`<div class="progresso">${Array.from({length:N},(_,k)=>`<i class="${k<=i?'on':''}"></i>`).join('')}</div><div class="muted">Pergunta ${i+1} de ${N}</div>`;
   if(i===0)h+=`<h2 class="grande">Qual é o nome da prova?</h2><input id="aNome" value="${esc(t.nome)}" maxlength="48" placeholder="Ex.: Prova do 1º bimestre"><label>Turma <span class="muted">(se quiser)</span></label><input id="aTurma" value="${esc(t.turma)}" maxlength="20" placeholder="Ex.: 2º A">`;
   if(i===1)h+=`<h2 class="grande">Quantas questões tem a prova?</h2>${stepperHTML('aNQ',t.nQ)}<div class="chips" id="aAtal">${[10,20,30,40,50].map(v=>`<button data-v="${v}" class="${v===t.nQ?'on':''}">${v}</button>`).join('')}</div>`;
   if(i===2)h+=`<h2 class="grande">Quais letras cada questão tem?</h2>${escolhaLetras(t.nAlt)}`;
   if(i===3)h+=`<h2 class="grande">Quantas disciplinas a prova tem?</h2><p class="muted" style="margin-top:-6px">Cada disciplina terá uma nota separada. Se for de uma matéria só, escolha 1.</p><div id="aDisc"></div>`;
-  if(i===4)h+=`<h2 class="grande">Quer colocar os nomes dos alunos?</h2><p class="muted" style="margin-top:-6px">Escreva um nome por linha, na ordem da chamada. Assim as notas aparecem com o nome do aluno. Pode deixar em branco e fazer depois.</p><textarea id="aAl" placeholder="Ana Souza&#10;Bruno Lima&#10;Carla Dias">${esc(t.alunos)}</textarea>`;
   h+=`<button class="btn ${i===N-1?'verde':''}" id="aProx">${i===N-1?'Criar a prova':'Próximo &#8250;'}</button>`;
   $('#tela').innerHTML=h;
   if(i===0){$('#aNome').oninput=e=>t.nome=e.target.value;$('#aTurma').oninput=e=>t.turma=e.target.value}
@@ -773,7 +767,6 @@ TELAS.assist=a=>{
     document.querySelectorAll('#aAtal button').forEach(b=>b.onclick=()=>{$('#aNQ').value=b.dataset.v;$('#aNQ').onchange()})}
   if(i===2)document.querySelectorAll('.escolha').forEach(b=>b.onclick=()=>{t.nAlt=+b.dataset.a;if(t.nQ>maxQuestoes(t.nAlt))ajustaNQ(t,maxQuestoes(t.nAlt));render()});
   if(i===3)discLiga(t,$('#aDisc'),false);
-  if(i===4)$('#aAl').oninput=e=>t.alunos=e.target.value;
   $('#aProx').onclick=async()=>{
     if(i===0&&!t.nome.trim()){$('#aNome').classList.add('falta');$('#aNome').focus();toast('Escreva o nome da prova');return}
     if(i===3){const pr=problemasDisc(t);if(pr.length){aviso('Confira as disciplinas',pr.map(esc).join('<br><br>'));return}}
@@ -799,7 +792,7 @@ TELAS.prova=()=>{
     h+=passo(1,'sGab',IC.gabarito,'1. Marcar o gabarito',gabOk?'Gabarito completo. Toque para conferir':gabN?`Faltam ${A.length-gabN} questões`:`Toque na resposta certa das ${faixa}`,gabOk,nx)
      +passo(2,'sCor',IC.camera,'2. Corrigir os cartões',subCor,false,nx)
      +passo(3,'sNot',IC.notas,'3. Ver as notas',subNot,p.res.length>0,nx)
-     +`<div style="height:12px"></div><button class="btn sec" id="sImp">${IC.impressora} Imprimir cartões em branco</button><button class="btn sec" id="sEnv">${IC.enviar} Mandar o gabarito para um colega</button><button class="btn sec" id="sCfg">${IC.alunos} Turma e nomes dos alunos</button>`;
+     +`<div style="height:12px"></div><button class="btn sec" id="sImp">${IC.impressora} Imprimir cartões em branco</button><button class="btn sec" id="sEnv">${IC.enviar} Mandar o gabarito para um colega</button><button class="btn sec" id="sCfg">${IC.alunos} Mudar a turma</button>`;
   }else{
     const nx=proximoPasso(p);
     h+=passo(1,'sImp',IC.impressora,'1. Imprimir os cartões',p.impresso?'Cartão já baixado':'Baixe e imprima o cartão-resposta',p.impresso,nx)
@@ -819,13 +812,13 @@ TELAS.prova=()=>{
 /* ---- ajustes ---- */
 TELAS.config=()=>{
   const p=prova();
-  if(p.recebida||p.area){titulo('Turma e alunos');
-    $('#tela').innerHTML=`<div class="card"><div class="mini">PROVA</div><b>${esc(tituloProva(p))}${p.so>=0?' · '+esc(p.nome):''}</b><p class="muted" style="margin-bottom:0">${p.recebida?'As questões e o gabarito vêm do colega que criou a prova. Se ele mudar alguma coisa, peça o link de novo e toque em <b>Receber prova</b>.':'Aqui você coloca a turma e os nomes dos alunos. O gabarito fica no passo <b>Marcar o gabarito</b>.'}</p></div>
+  if(p.recebida||p.area){titulo('Turma');
+    $('#tela').innerHTML=`<div class="card"><div class="mini">PROVA</div><b>${esc(tituloProva(p))}${p.so>=0?' · '+esc(p.nome):''}</b><p class="muted" style="margin-bottom:0">${p.recebida?'As questões e o gabarito vêm do colega que criou a prova. Se ele mudar alguma coisa, peça o link de novo e toque em <b>Receber prova</b>.':'Aqui você muda a turma. O gabarito fica no passo <b>Marcar o gabarito</b>.'}</p></div>
     <div class="card"><label style="margin-top:0">Sua turma</label><input id="fTurma" value="${esc(p.turma)}" maxlength="20" placeholder="Ex.: 2º A">
-    <label>Nomes dos alunos</label><p class="muted" style="margin-top:0">Um nome por linha, na ordem da chamada.</p><textarea id="fAl" placeholder="Ana Souza&#10;Bruno Lima">${esc(p.alunos)}</textarea></div>
+</div>
     <button class="btn verde" id="fSalvar">Salvar</button><button class="btn perigo" id="fApagar" style="margin-top:30px">Apagar esta prova deste celular</button>`;
-    $('#fSalvar').onclick=()=>{p.turma=$('#fTurma').value.trim();p.alunos=$('#fAl').value;salvar();toast('Salvo');voltar()};
-    $('#fApagar').onclick=async()=>{if(!await pergunta('Apagar a prova "'+p.nome+'" e as notas dela deste celular? Não tem como desfazer.','Sim, apagar',true))return;DB.provas=DB.provas.filter(x=>x.id!==p.id);DB.ativa=null;salvar();atual={tela:'inicio'};pilha=[];render()};
+    $('#fSalvar').onclick=()=>{p.turma=$('#fTurma').value.trim();salvar();toast('Salvo');voltar()};
+    $('#fApagar').onclick=async()=>{if(!await pergunta('Apagar a prova "'+p.nome+'" e as notas dela deste celular? Não tem como desfazer.','Sim, apagar',true))return;p.res.forEach(r=>IDB.del(r.id));DB.provas=DB.provas.filter(x=>x.id!==p.id);DB.ativa=null;salvar();atual={tela:'inicio'};pilha=[];render()};
     return}
   titulo('Dados da prova');
   const t=JSON.parse(JSON.stringify(p));
@@ -833,10 +826,9 @@ TELAS.config=()=>{
     <label>Turma</label><input id="fTurma" value="${esc(t.turma)}" maxlength="20" placeholder="Ex.: 2º A"></div>
   <div class="card"><h2>Quantas questões</h2>${stepperHTML('fNQ',t.nQ)}<h2 style="margin-top:18px">Letras de cada questão</h2><div id="fLet">${escolhaLetras(t.nAlt)}</div></div>
   <div class="card"><h2>Disciplinas</h2><p class="muted" style="margin-top:0">Quantas disciplinas a prova tem:</p><div id="fDisc"></div></div>
-  <div class="card"><h2>Nomes dos alunos</h2><p class="muted" style="margin-top:0">Um nome por linha, na ordem da chamada.</p><textarea id="fAl" placeholder="Ana Souza&#10;Bruno Lima">${esc(t.alunos)}</textarea></div>
   <button class="btn verde" id="fSalvar">Salvar</button>
   <button class="btn perigo" id="fApagar" style="margin-top:30px">Apagar esta prova</button>`;
-  $('#fNome').oninput=e=>t.nome=e.target.value;$('#fTurma').oninput=e=>t.turma=e.target.value;$('#fAl').oninput=e=>t.alunos=e.target.value;
+  $('#fNome').oninput=e=>t.nome=e.target.value;$('#fTurma').oninput=e=>t.turma=e.target.value;
   const box=$('#fDisc');
   stepperLiga($('#fNQ'),1,maxQuestoes(t.nAlt),v=>{ajustaNQ(t,v);discLiga(t,box,false)});
   const ligaLet=()=>$('#fLet').querySelectorAll('.escolha').forEach(b=>b.onclick=()=>{t.nAlt=+b.dataset.a;const mx=maxQuestoes(t.nAlt);if(t.nQ>mx){ajustaNQ(t,mx);$('#fNQ').value=mx;discLiga(t,box,false)}$('#fLet').innerHTML=escolhaLetras(t.nAlt);ligaLet()});
@@ -850,7 +842,7 @@ TELAS.config=()=>{
     Object.assign(p,{nome:t.nome.trim()||'Prova',turma:t.turma.trim(),nQ:t.nQ,nAlt:t.nAlt,disc:t.disc,gab:t.gab,alunos:t.alunos,impresso:t.impresso});
     salvar();toast('Dados salvos');if(mudou)aviso('Imprima de novo','O cartão mudou. Baixe e imprima o cartão novo antes de aplicar a prova.').then(voltar);else voltar();
   };
-  $('#fApagar').onclick=async()=>{if(!await pergunta('Apagar a prova "'+p.nome+'" e todas as notas dela? Não tem como desfazer.','Sim, apagar tudo',true))return;DB.provas=DB.provas.filter(x=>x.id!==p.id);DB.ativa=null;salvar();atual={tela:'inicio'};pilha=[];render()};
+  $('#fApagar').onclick=async()=>{if(!await pergunta('Apagar a prova "'+p.nome+'" e todas as notas dela? Não tem como desfazer.','Sim, apagar tudo',true))return;p.res.forEach(r=>IDB.del(r.id));DB.provas=DB.provas.filter(x=>x.id!==p.id);DB.ativa=null;salvar();atual={tela:'inicio'};pilha=[];render()};
 };
 
 /* ---- cartão ---- */
@@ -863,7 +855,7 @@ TELAS.cartao=()=>{
   <div class="cardprev">${cardSVG(p)}</div>
   <div class="card" style="margin-top:14px"><h2>Explique para os alunos</h2><div class="ilus" style="margin:0">${DES.pintar}</div>
   <p>Pintar a bolinha inteira com caneta preta ou azul escura. Não rasurar e não dobrar a folha.</p>
-  <p>Marcar o número de chamada em duas linhas, dezena e unidade. Exemplo: o número <b>7</b> é dezena <b>0</b> e unidade <b>7</b>. O número <b>23</b> é dezena <b>2</b> e unidade <b>3</b>.</p></div>
+  <p>Escrever o nome completo, com letra legível, dentro da caixa do topo.</p></div>
   <button class="btn verde" id="bJa">${IC.check} Já imprimi, ir para o próximo passo</button>`;
   const marca=()=>{if(!p0.impresso){p0.impresso=true;salvar()}};
   if($('#bImp'))$('#bImp').onclick=()=>{marca();$('#printArea').innerHTML=cardSVG(p);setTimeout(()=>window.print(),100)};
@@ -881,7 +873,11 @@ TELAS.gabarito=()=>{
   for(const i of A){h+=`<div class="qrow"><span class="qn">${i+1}</span>`;for(let k=0;k<p.nAlt;k++)h+=`<button class="chip ${p.gab[i]===k?'on':''}" data-q="${i}" data-k="${k}">${LET[k]}</button>`;
     h+=`<button class="chip anul ${p.gab[i]===-3?'on':''}" data-q="${i}" data-k="-3">Anular</button></div>`}
   h+=`</div><button class="btn verde" id="bOk">${IC.check} Pronto</button>`;
+  // gabarito já marcado em outra turma da mesma prova: oferecer, nunca copiar sozinho (pode ser de outra série)
+  const irmas=p.area?DB.provas.filter(x=>x.id!==p.id&&x.area===p.area&&A.every(i=>x.gab[i]!==-1)&&(x.so===p.so||x.so===-1||x.so==null)):[];
+  if(irmas.length&&A.every(i=>p.gab[i]===-1))h=`<div class="card"><b>Usar um gabarito que você já marcou?</b><p class="muted" style="margin:6px 0 0">Só use se for a mesma prova da mesma série.</p>${irmas.slice(0,4).map(x=>`<button class="btn sec peq" data-irma="${x.id}">Copiar de ${esc(tituloProva(x))}${x.turma?' · '+esc(x.turma):' (sem turma)'}</button>`).join('')}</div>`+h;
   $('#tela').innerHTML=h;cont();
+  document.querySelectorAll('[data-irma]').forEach(b=>b.onclick=()=>{const x=DB.provas.find(y=>y.id===b.dataset.irma);A.forEach(i=>p.gab[i]=x.gab[i]);salvar();toast('Gabarito copiado. Confira antes de corrigir.');render()});
   document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const q=+b.dataset.q,k=+b.dataset.k;p.gab[q]=p.gab[q]===k?-1:k;salvar();
     b.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',+c.dataset.k===p.gab[q]));cont()});
   if($('#bLerGab'))$('#bLerGab').onclick=()=>corrigirCartao('gabarito');
@@ -969,7 +965,7 @@ function lido(R,id){
   if(pv&&pv.area&&R.area&&R.area!==pv.area){fecharCamera();ir('falha',{outra:R.area});return}
   const img=retifica(id,R.H,2.4);
   let ass=null;try{ass=recorte(id,R.H,ASS,6)}catch(e){}
-  const dados={resp:R.resp.slice(),duv:R.duv.slice(),num:R.num,numDuv:R.numDuv,img,ass};
+  const dados={resp:R.resp.slice(),duv:R.duv.slice(),img,ass};
   if(atual&&(atual.tela==='falha'))pilha.length&&(atual=pilha.pop());
   ir(cam.modo==='gabarito'?'revGab':'revisao',dados);
 }
@@ -1010,9 +1006,7 @@ function telaRevisao(d,modoGab){
   let h='';
   if(!modoGab){
     h+=`<div class="card"><div class="mini">NOME QUE O ALUNO ESCREVEU</div><img class="ass" id="assImg" alt="Nome do aluno">
-    <label>Número de chamada <span class="muted">(se o aluno marcou)</span> ${d.numDuv?'<span class="tag d">confira</span>':''}</label>
-    <input id="fNum" type="number" inputmode="numeric" min="1" max="99" value="${d.num??''}" placeholder="Número" style="font-size:1.5em;font-weight:800;text-align:center">
-    <div id="nomeA" style="margin-top:8px;font-weight:700;text-align:center"></div><div class="notas" id="notas"></div></div>`;
+    <div class="notas" id="notas"></div></div>`;
   }
   if(idxDuv.length){h+=`<div class="aviso"><b>Confira ${idxDuv.length===1?'esta questão':'estas '+idxDuv.length+' questões'}.</b> Olhe no cartão do aluno e toque na letra que ele marcou. Se ele não marcou nada, toque na letra azul para apagar.</div><div class="card" style="padding:8px">${idxDuv.map(i=>linhaQ(p,i,true)).join('')}</div>`}
   else if(!editId){const nb=A.filter(i=>resp[i]===-1).length,nm=A.filter(i=>resp[i]===-2).length;
@@ -1035,23 +1029,21 @@ function telaRevisao(d,modoGab){
     $('#st'+i).innerHTML=t;
   }
   function notas(){if(modoGab)return;const c=corrigir(p,resp);$('#notas').innerHTML=c.disc.map(x=>`<div>${esc(x.nome)}<b>${fmt(x.nota)}</b>${x.ac} de ${x.n} certas</div>`).join('');
-    const n=parseInt($('#fNum').value);$('#nomeA').textContent=nomeAluno(p,n);$('#fNum').classList.toggle('falta',$('#fNum').value!==''&&!(n>=1&&n<=99))}
+}
   for(const i of A)pinta(i);notas();
   if(!modoGab){const im=$('#assImg');if(d.ass)im.src=d.ass;else if(d.editId)mostraAss(im,d.editId);else im.replaceWith(Object.assign(document.createElement('div'),{className:'muted',textContent:'(não consegui recortar o nome)'}))}
   if(cv)desenhaPrev(cv,d.img,p,resp,duv,modoGab);
   document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const q=+b.dataset.q,k=+b.dataset.k;resp[q]=resp[q]===k?-1:k;pinta(q);notas();if(cv)desenhaPrev(cv,d.img,p,resp,duv,modoGab)});
-  if(!modoGab)$('#fNum').oninput=notas;
   const salvarR=async()=>{
     if(modoGab){A.forEach(i=>{const v=resp[i];p.gab[i]=v>=0?v:(p.gab[i]===-3?-3:-1)});salvar();toast('Gabarito salvo');pilha.pop();atual={tela:'gabarito'};render();return}
-    const vn=$('#fNum').value.trim(),n=vn===''?null:parseInt(vn);
-    if(vn!==''&&!(n>=1&&n<=99)){await aviso('Número errado','O número de chamada vai de 1 a 99. Corrija ou apague o número.');window.scrollTo(0,0);$('#fNum').focus();return}
-    const outro=n?p.res.find(r=>r.num===n&&r.id!==editId):null;
-    if(outro&&!await pergunta('O aluno nº '+n+(nomeAluno(p,n)?' ('+nomeAluno(p,n)+')':'')+' já foi corrigido antes. Trocar pela correção nova?','Sim, trocar'))return;
-    if(outro)p.res=p.res.filter(r=>r!==outro);
-    if(editId){const r=p.res.find(r=>r.id===editId);r.num=n;r.resp=resp.slice();salvar();toast('Correção atualizada');voltar();return}
-    const rid=uid();p.res.push({id:rid,num:n,resp:resp.slice(),data:Date.now()});p.usada=Date.now();salvar();if(d.ass)IDB.put(rid,d.ass);
-    if(outro)IDB.del(outro.id);
-    while(pilha.length&&pilha[pilha.length-1].tela==='salvo')pilha.pop();atual={tela:'salvo',arg:{num:n,resp:resp.slice(),ass:d.ass}};render();
+    if(editId){const r=p.res.find(r=>r.id===editId);r.resp=resp.slice();salvar();toast('Correção atualizada');voltar();return}
+    // o mesmo cartão fotografado duas vezes: todas as 40 respostas iguais a uma correção já salva
+    const igual=p.res.find(r=>r.resp.length===resp.length&&r.resp.every((v,i)=>v===resp[i]));
+    if(igual){const im=await IDB.get(igual.id);
+      const op=await janela('Este cartão já foi corrigido?',`As respostas são iguais às de um cartão que você já salvou${im?':<img class="ass" style="margin-top:8px" src="'+im+'">':'.'}`,[{t:'Já corrigi, descartar este',cls:''},{t:'É outro aluno, salvar',cls:'sec'}]);
+      if(op===0){pilha.pop();atual={tela:'salvo',arg:{resp:igual.resp,ass:im,repetido:true}};render();return}}
+    const rid=uid();p.res.push({id:rid,resp:resp.slice(),data:Date.now()});p.usada=Date.now();salvar();if(d.ass)IDB.put(rid,d.ass);
+    while(pilha.length&&pilha[pilha.length-1].tela==='salvo')pilha.pop();atual={tela:'salvo',arg:{resp:resp.slice(),ass:d.ass}};render();
   };
   $('#bSalvarR').onclick=salvarR;if($('#bSalvarR2'))$('#bSalvarR2').onclick=salvarR;
   if($('#bDesc'))$('#bDesc').onclick=()=>{voltar();corrigirCartao(modoGab?'gabarito':'corrigir')};
@@ -1062,9 +1054,9 @@ TELAS.revGab=d=>telaRevisao(d,true);
 
 /* ---- salvo ---- */
 TELAS.salvo=a=>{
-  const p=prova();titulo('Salvo');const c=corrigir(p,a.resp),nm=nomeAluno(p,a.num);
-  $('#tela').innerHTML=`<div class="card centro"><div class="grandeOk" style="width:72px;height:72px;margin-top:4px">${IC.check}</div><h2 class="grande" style="margin-bottom:8px">Correção salva</h2>
-  ${a.ass?`<img class="ass" src="${a.ass}" alt="Nome do aluno">`:''}${a.num?`<div style="font-weight:700;margin-top:8px">Nº ${a.num}${nm?' · '+esc(nm):''}</div>`:''}
+  const p=prova();titulo(a.repetido?'Já corrigido':'Salvo');const c=corrigir(p,a.resp);
+  $('#tela').innerHTML=`<div class="card centro"><div class="grandeOk" style="width:72px;height:72px;margin-top:4px">${IC.check}</div><h2 class="grande" style="margin-bottom:8px">${a.repetido?'Este cartão já estava salvo':'Correção salva'}</h2>
+  ${a.ass?`<img class="ass" src="${a.ass}" alt="Nome do aluno">`:''}
   <div class="notas" style="justify-content:center">${c.disc.map(x=>`<div>${esc(x.nome)}<b>${fmt(x.nota)}</b>${x.ac} de ${x.n} certas</div>`).join('')}</div>
   <p class="muted">${p.res.length} ${p.res.length===1?'cartão corrigido':'cartões corrigidos'} até agora</p></div>
   <button class="btn verde" id="bProx">${IC.camera} Corrigir o próximo cartão</button>
@@ -1083,19 +1075,17 @@ TELAS.notas=()=>{
   <button class="btn verde" id="bPdf">${IC.baixar} Baixar resultado com os nomes (PDF)</button><button class="btn sec" id="bCsv">Baixar planilha</button><button class="btn sec" id="bCop">Copiar as notas</button>
   <p class="muted" style="margin:4px 0 0">O PDF mostra o nome escrito por cada aluno ao lado da nota. A planilha abre no Excel e no Google Planilhas.</p></div>
   <p class="muted" style="margin:0 4px 8px">Toque num aluno para ver ou consertar a correção.</p>`;
-  for(const r of rs){const c=corrigir(p,r.resp),nm=nomeAluno(p,r.num);
+  rs.forEach((r,ix)=>{const c=corrigir(p,r.resp);
     h+=`<button class="card click" data-id="${r.id}" style="display:block;width:100%;text-align:left;font-family:inherit;font-size:1em;color:inherit;padding:12px;cursor:pointer">
     <img class="ass" data-ass="${r.id}" alt="Nome do aluno" style="border-width:1px">
-    <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:8px">${r.num?`<span class="muted">Nº ${r.num}${nm?' · '+esc(nm):''}</span>`:''}${c.disc.map(x=>`<span>${c.disc.length>1?esc(x.nome)+': ':''}<b style="font-size:1.3em;color:var(--azul)">${fmt(x.nota)}</b> <span class="muted">(${x.ac} de ${x.n})</span></span>`).join('')}</div></button>`}
-  if((p.alunos||'').trim()){const falt=(p.alunos||'').split('\n').map((s,i)=>[i+1,s.trim()]).filter(([n,s])=>s&&!rs.some(r=>r.num===n));
-    if(falt.length)h+=`<div class="aviso"><b>Ainda sem correção (${falt.length}):</b><br>${falt.map(([n,s])=>n+'. '+esc(s)).join('<br>')}</div>`}
+    <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:8px"><span class="muted">${ix+1}º</span>${c.disc.map(x=>`<span>${c.disc.length>1?esc(x.nome)+': ':''}<b style="font-size:1.3em;color:var(--azul)">${fmt(x.nota)}</b> <span class="muted">(${x.ac} de ${x.n})</span></span>`).join('')}</div></button>`});
   h+=`<details><summary>Quais questões a turma mais errou</summary><div class="dentro">`;
   for(const i of A){const g=p.gab[i];const ac=rs.filter(r=>g===-3||(g>=0&&r.resp[i]===g)).length,pc=Math.round(100*ac/rs.length);
     h+=`<div style="display:flex;align-items:center;gap:8px;margin:8px 0"><span style="width:34px;text-align:right;font-weight:800">${i+1}</span><div class="barra" style="flex:1"><i style="width:${pc}%;background:${pc<40?'#c0392b':pc<70?'#d9a000':'#17824a'}"></i></div><span style="width:58px;font-size:.85em">${pc}% certo</span></div>`}
   h+=`</div></details><button class="btn verde" id="bMais">${IC.camera} Corrigir mais cartões</button><button class="btn perigo" id="bZera" style="margin-top:24px">Apagar todas as correções</button>`;
   $('#tela').innerHTML=h;
   document.querySelectorAll('img[data-ass]').forEach(im=>mostraAss(im,im.dataset.ass));
-  document.querySelectorAll('.click[data-id]').forEach(tr=>tr.onclick=()=>{const r=p.res.find(x=>x.id===tr.dataset.id);ir('revisao',{resp:r.resp.slice(),duv:Array(p.nQ).fill(false),num:r.num,numDuv:false,editId:r.id})});
+  document.querySelectorAll('.click[data-id]').forEach(tr=>tr.onclick=()=>{const r=p.res.find(x=>x.id===tr.dataset.id);ir('revisao',{resp:r.resp.slice(),duv:Array(p.nQ).fill(false),editId:r.id})});
   const nomeArq='notas-'+limpa(tituloProva(p)+(p.turma?' '+p.turma:''));
   $('#bCsv').onclick=()=>baixar(new Blob(['﻿'+tabela(p,';',true)],{type:'text/csv;charset=utf-8'}),nomeArq+'.csv');
   $('#bPdf').onclick=()=>relatorioPDF(p).then(b=>baixar(b,nomeArq+'.pdf')).catch(()=>toast('Não consegui gerar o PDF'));
@@ -1114,15 +1104,15 @@ async function relatorioPDF(p){
       const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#000';
       x.font='bold 40px Arial';x.fillText('Resultado · '+tituloProva(p),M,M+30);
       x.font='26px Arial';x.fillStyle='#444';x.fillText([p.area||p.so>=0?p.nome:'',p.turma?'Turma '+p.turma:'',new Date().toLocaleDateString('pt-BR'),'Página '+(pags.length+1)].filter(Boolean).join('  ·  '),M,M+72);
-      x.fillStyle='#000';x.font='bold 24px Arial';const yc=M+120;x.fillText('Nº',M,yc);x.fillText('Nome escrito pelo aluno',M+90,yc);
+      x.fillStyle='#000';x.font='bold 24px Arial';const yc=M+120;x.fillText('',M,yc);x.fillText('Nome escrito pelo aluno',M+90,yc);
       const xn=M+90+640;DA.forEach((d,j)=>{x.fillText(DA.length>1?d.nome.slice(0,10):'Nota',xn+j*(DA.length>1?95:120),yc)});
       x.strokeStyle='#000';x.lineWidth=2;x.beginPath();x.moveTo(M,yc+14);x.lineTo(W-M,yc+14);x.stroke();
       const lote=rs.slice(k,k+porPag);
       for(let j=0;j<lote.length;j++){const r=lote[j],y=yc+30+j*linha,cc=corrigir(p,r.resp);
-        x.fillStyle='#000';x.font='bold 30px Arial';x.fillText(r.num?String(r.num):'-',M,y+60);
+        x.fillStyle='#666';x.font='26px Arial';x.fillText((k+j+1)+'º',M,y+60);
         const im=await carrega(await IDB.get(r.id));
         if(im){x.drawImage(im,M+90,y,620,620*im.height/im.width);x.strokeStyle='#999';x.lineWidth=1;x.strokeRect(M+90,y,620,620*im.height/im.width)}
-        else{x.font='24px Arial';x.fillStyle='#888';x.fillText(nomeAluno(p,r.num)||'(sem foto do nome)',M+90,y+60)}
+        else{x.font='24px Arial';x.fillStyle='#888';x.fillText('(sem foto do nome)',M+90,y+60)}
         x.fillStyle='#000';x.font=(DA.length>1?'bold 30px':'bold 44px')+' Arial';cc.disc.forEach((d,jj)=>x.fillText(fmt(d.nota),xn+jj*(DA.length>1?95:120),y+64));
         x.strokeStyle='#ddd';x.lineWidth=1;x.beginPath();x.moveTo(M,y+linha-12);x.lineTo(W-M,y+linha-12);x.stroke()}
       const b=await new Promise(r=>c.toBlob(r,'image/jpeg',0.85));pags.push({jpg:new Uint8Array(await b.arrayBuffer()),w:W,h:H});
