@@ -7,5 +7,5 @@ O site precisa ter endereço com https:// para a câmera ao vivo funcionar
 e para o app poder ser colocado na tela do celular.
 
 Quando publicar uma versão nova do index.html, abra o sw.js e troque
-'corretor-v2' por 'corretor-v3' (e assim por diante), para os celulares
+'corretor-v3' por 'corretor-v4' (e assim por diante), para os celulares
 pegarem a versão nova.
