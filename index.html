@@ -26,7 +26,7 @@ main{padding:14px;max-width:720px;margin:0 auto;padding-bottom:90px}
 .card h2{font-size:1.1em;margin:0 0 8px}
 h2.grande{font-size:1.35em;margin:6px 0 14px;line-height:1.25}
 .muted{color:var(--cinza);font-size:.88em}
-.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;padding:14px;border-radius:14px;border:0;background:var(--azul);color:#fff;font-size:1em;font-weight:700;margin:10px 0;cursor:pointer;font-family:inherit;text-align:center}
+.btn{text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;padding:14px;border-radius:14px;border:0;background:var(--azul);color:#fff;font-size:1em;font-weight:700;margin:10px 0;cursor:pointer;font-family:inherit;text-align:center}
 .btn svg{width:30px;height:30px;flex:none}
 .btn.sec{background:var(--azul2);color:var(--azul)}
 .btn.verde{background:var(--verde)}
@@ -422,6 +422,8 @@ const IC={
  ajustes:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="8" y1="12" x2="40" y2="12"/><line x1="8" y1="24" x2="40" y2="24"/><line x1="8" y1="36" x2="40" y2="36"/><circle cx="17" cy="12" r="4" fill="#fff"/><circle cx="31" cy="24" r="4" fill="#fff"/><circle cx="20" cy="36" r="4" fill="#fff"/></svg>',
  check:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 25l9 9 19-20"/></svg>',
  baixar:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6v24M14 20l10 10 10-10M8 40h32"/></svg>',
+ receber:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 28v12h36V28"/><path d="M24 6v24M15 21l9 9 9-9"/></svg>',
+ enviar:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"><path d="M5 22L43 6 33 42 22 28z"/><path d="M22 28L43 6"/></svg>',
  mais:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M24 10v28M10 24h28"/></svg>',
  celular:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3"><rect x="13" y="4" width="22" height="40" rx="4"/><line x1="21" y1="38" x2="27" y2="38" stroke-linecap="round"/></svg>',
  alunos:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3"><circle cx="18" cy="16" r="6"/><path d="M6 40c0-8 5-13 12-13s12 5 12 13"/><circle cx="34" cy="18" r="5"/><path d="M32 28c6 0 10 4 10 11"/></svg>',
@@ -486,6 +488,8 @@ const AJUDA={
  notas:'Aqui estão as notas de todos os alunos já corrigidos. Toque numa linha para ver ou consertar a correção daquele aluno. <b>Baixar planilha</b> cria um arquivo que abre no Excel ou no Google Planilhas.',
  falha:'O app não achou os 4 quadrados pretos do cartão. Coloque o cartão numa mesa, em lugar claro, e fotografe de cima, mostrando a folha inteira.',
  tutorial:'Passe as telas para aprender como o app funciona.',
+ receber:'Cole aqui o link ou o código que o colega mandou pelo WhatsApp. Para colar, toque e segure dentro da caixa branca e escolha <b>Colar</b>. Depois toque em <b>Continuar</b>.',
+ enviar:'Mande o link para os professores que vão corrigir. Quem abrir o link recebe a prova pronta, com o gabarito, e só precisa corrigir os cartões.',
  instalar:'Siga os passos para colocar o app na tela inicial do celular, como um aplicativo.'
 };
 
@@ -527,11 +531,11 @@ TELAS.inicio=()=>{
     h+=`<div class="card" style="border:2px solid var(--azul)"><div style="display:flex;gap:12px;align-items:center"><span style="color:var(--azul);flex:none;width:44px">${IC.celular}</span><div><b>Coloque o app na tela do celular</b><div class="muted">Assim ele abre com um toque, como um aplicativo, e funciona sem internet.</div></div></div>
     <button class="btn" id="bInst">Colocar na tela do celular</button><button class="btn leve" id="bJaInst">Já coloquei</button></div>`;
   if(!ps.length){
-    h+=`<div class="card centro"><div class="ilus">${DES.fotografar}</div><h2 class="grande">Corrija provas com a câmera do celular</h2><p class="muted">Você cria a prova, imprime os cartões e o app corrige sozinho.</p></div>
-    <button class="btn verde" id="bNova">${IC.mais} Criar minha primeira prova</button><button class="btn sec" id="bTuto">Ver como funciona</button>`;
+    h+=`<div class="card centro"><div class="ilus">${DES.fotografar}</div><h2 class="grande">Corrija provas com a câmera do celular</h2><p class="muted">Recebeu a prova de um colega? Toque no botão verde. Vai montar a prova você mesmo? Toque no botão azul.</p></div>
+    <button class="btn verde" id="bRec">${IC.receber} Recebi uma prova de um colega</button><button class="btn" id="bNova">${IC.mais} Criar uma prova nova</button><button class="btn leve" id="bTuto">Ver como funciona</button>`;
   }else{
-    h+=`<button class="btn verde" id="bNova">${IC.mais} Criar nova prova</button><h2 style="margin:18px 4px 10px;font-size:1em;color:var(--cinza)">Minhas provas</h2>`;
-    for(const p of ps)h+=`<button class="passo" data-id="${p.id}"><span class="ic">${IC.gabarito}</span><span><b>${esc(p.nome)}${p.turma?' · '+esc(p.turma):''}</b><small>${p.nQ} questões · ${p.res.length} ${p.res.length===1?'cartão corrigido':'cartões corrigidos'}</small></span></button>`;
+    h+=`<button class="btn verde" id="bRec">${IC.receber} Receber prova de um colega</button><button class="btn sec" id="bNova">${IC.mais} Criar uma prova nova</button><h2 style="margin:18px 4px 10px;font-size:1em;color:var(--cinza)">Minhas provas</h2>`;
+    for(const p of ps)h+=`<button class="passo" data-id="${p.id}"><span class="ic">${IC.gabarito}</span><span><b>${esc(p.nome)}${p.turma?' · '+esc(p.turma):''}</b><small>${p.recebida?'Recebida · ':''}${p.nQ} questões · ${p.res.length} ${p.res.length===1?'cartão corrigido':'cartões corrigidos'}</small></span></button>`;
     h+=`<button class="btn leve" id="bTuto">Ver como funciona</button>`;
   }
   h+=`<details><summary>Tamanho da letra e cópia de segurança</summary><div class="dentro">
@@ -542,6 +546,7 @@ TELAS.inicio=()=>{
   if($('#bInst')){$('#bInst').onclick=instalar;$('#bJaInst').onclick=()=>{DB.cfg.instalou=true;salvar();render()}}
   $('#bNova').onclick=()=>{const p=novaProva();p.nome='';ir('assist',{passo:0,p})};
   $('#bTuto').onclick=()=>ir('tutorial',{i:0});
+  $('#bRec').onclick=()=>ir('receber',{});
   document.querySelectorAll('.passo[data-id]').forEach(b=>b.onclick=()=>{DB.ativa=b.dataset.id;salvar();ir('prova')});
   $('#lN').onclick=()=>{DB.cfg.letraGrande=false;salvar();aplicaLetra();render()};
   $('#lG').onclick=()=>{DB.cfg.letraGrande=true;salvar();aplicaLetra();render()};
@@ -550,6 +555,69 @@ TELAS.inicio=()=>{
 };
 $('#arqBackup').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.provas))throw 0;
   if(!await pergunta('A cópia vai substituir as provas que estão neste celular. Continuar?','Sim, restaurar'))return;d.cfg=Object.assign({},DB.cfg,d.cfg||{});DB=d;salvar();toast('Cópia restaurada');atual={tela:'inicio'};render()}catch(x){aviso('Arquivo errado','Esse arquivo não é uma cópia do Corretor.')}};r.readAsText(f)};
+
+/* ---- compartilhar a prova entre professores ---- */
+function b64u(str){const b=new TextEncoder().encode(str);let s='';b.forEach(c=>s+=String.fromCharCode(c));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function deB64u(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const s=atob(t),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return new TextDecoder().decode(b)}
+function codigoProva(p){return b64u(JSON.stringify({v:1,id:p.id,n:p.nome,q:p.nQ,a:p.nAlt,d:p.disc.map(d=>[d.nome,d.de,d.ate,d.valor]),g:p.gab.map(v=>v>=0?LET[v]:v===-3?'X':'-').join('')}))}
+function linkProva(p){return location.origin+location.pathname+'#receber='+codigoProva(p)}
+function lerCodigo(txt){
+  try{txt=String(txt||'').trim();const m=txt.match(/receber=([A-Za-z0-9_-]+)/);const c=m?m[1]:(txt.match(/^[A-Za-z0-9_-]{20,}$/)||[])[0];if(!c)return null;
+    const o=JSON.parse(deB64u(c));if(o.v!==1||!o.id||!(o.q>=1&&o.q<=120)||!(o.a===4||o.a===5)||!Array.isArray(o.d)||typeof o.g!=='string'||o.g.length!==o.q)return null;
+    return{id:String(o.id),nome:String(o.n||'Prova'),nQ:o.q,nAlt:o.a,disc:o.d.map(x=>({nome:String(x[0]),de:+x[1],ate:+x[2],valor:+x[3]})),gab:o.g.split('').map(ch=>ch==='X'?-3:ch==='-'?-1:LET.indexOf(ch))}}catch(e){return null}}
+
+TELAS.enviar=()=>{
+  const p=prova();titulo('Enviar para os colegas');
+  const link=linkProva(p),falta=p.gab.filter(v=>v===-1).length;
+  const texto=`Prova: ${p.nome}\nPara corrigir no Corretor de Cartões, toque no link:\n${link}\n\nSe o Corretor já está instalado no seu celular, copie este link, abra o app, toque em "Receber prova" e cole.`;
+  $('#tela').innerHTML=`${falta?`<div class="aviso"><b>Atenção:</b> ainda faltam ${falta} questões no gabarito. É melhor completar o gabarito antes de enviar.</div>`:''}
+  <div class="card"><div class="ilus" style="color:var(--azul)"><span style="width:110px;display:block">${IC.enviar}</span></div>
+  <p style="margin-top:0">Mande este link para os professores que vão corrigir. Eles recebem a prova pronta, com o gabarito, e <b>só precisam corrigir</b>.</p>
+  <a class="btn verde" id="eZap" href="https://wa.me/?text=${encodeURIComponent(texto)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
+  ${navigator.share?'<button class="btn sec" id="eShare">Enviar por outro aplicativo</button>':''}
+  <button class="btn sec" id="eCop">Copiar o link</button></div>
+  <details><summary>Ver o link</summary><div class="dentro"><textarea readonly style="min-height:110px;font-size:.75em">${esc(link)}</textarea></div></details>
+  <button class="btn leve" id="eJa">Já enviei para os colegas</button>`;
+  const feito=()=>{if(!p.enviada){p.enviada=true;salvar()}};
+  $('#eZap').addEventListener('click',feito);
+  if($('#eShare'))$('#eShare').onclick=()=>{navigator.share({title:p.nome,text:texto}).then(feito).catch(()=>{})};
+  $('#eCop').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(link):Promise.reject()).then(()=>{feito();toast('Link copiado. Agora cole na conversa.')},()=>{const t=document.querySelector('details textarea');document.querySelector('details').open=true;t.select();try{document.execCommand('copy');feito();toast('Link copiado')}catch(e){toast('Toque e segure no link para copiar')}})};
+  $('#eJa').onclick=()=>{feito();voltar()};
+};
+
+TELAS.receber=a=>{
+  titulo('Receber prova');
+  const o=a.codigo?lerCodigo(a.codigo):null;
+  if(!o){
+    $('#tela').innerHTML=`<div class="card"><div class="ilus" style="color:var(--verde)"><span style="width:100px;display:block">${IC.receber}</span></div>
+    <h2 class="grande">Cole o link que o colega mandou</h2><p class="muted" style="margin-top:-6px">Copie o link da conversa do WhatsApp. Depois toque no botão <b>Colar</b>.</p>
+    ${navigator.clipboard&&navigator.clipboard.readText?'<button class="btn" id="rColar">Colar</button>':''}
+    <textarea id="rTxt" placeholder="Ou toque e segure aqui para colar" style="min-height:110px">${esc(a.codigo||'')}</textarea>
+    <button class="btn verde" id="rOk">Continuar</button></div>`;
+    const seguir=v=>{const ob=lerCodigo(v);if(!ob){aviso('Não reconheci','Isso não parece um link de prova do Corretor. Peça para o colega mandar o link de novo e copie a mensagem inteira.');return}trocar('receber',{codigo:v})};
+    if($('#rColar'))$('#rColar').onclick=()=>navigator.clipboard.readText().then(v=>{$('#rTxt').value=v;seguir(v)},()=>toast('Toque e segure na caixa branca e escolha Colar'));
+    $('#rOk').onclick=()=>seguir($('#rTxt').value);
+    return;
+  }
+  const ja=DB.provas.find(x=>x.id===o.id),falta=o.gab.filter(v=>v===-1).length;
+  const iosAviso=ehIphone()&&!instalado()&&location.protocol==='https:';
+  $('#tela').innerHTML=`<div class="card"><div class="mini">PROVA RECEBIDA</div><h2 class="grande" style="margin-top:4px">${esc(o.nome)}</h2>
+  <p style="margin:0">${o.nQ} questões, letras ${LET.slice(0,o.nAlt).split('').join(', ')}</p>
+  <div class="notas">${o.disc.map(d=>`<div>${esc(d.nome)}<br><span class="muted">questões ${d.de} a ${d.ate} · vale ${fmt(d.valor)}</span></div>`).join('')}</div>
+  <p class="${falta?'':'muted'}">${falta?`⚠ O gabarito veio com ${falta} questões em branco.`:'✓ Gabarito completo'}</p></div>
+  ${ja?`<div class="okbox">Você já tem esta prova neste celular. Ela será atualizada com o que o colega mandou agora. As correções que você já fez continuam guardadas.</div>`:
+  `<div class="card"><label style="margin-top:0">Qual turma você vai corrigir? <span class="muted">(se quiser)</span></label><input id="rTurma" maxlength="20" placeholder="Ex.: 2º A"></div>`}
+  ${iosAviso?`<div class="aviso">Se você usa o Corretor pelo ícone na tela do iPhone, abra o app por lá, toque em <b>Receber prova</b> e cole o mesmo link.</div>`:''}
+  <button class="btn verde" id="rAdd">${IC.check} ${ja?'Atualizar a prova':'Adicionar esta prova'}</button><button class="btn sec" id="rNao">Cancelar</button>`;
+  $('#rNao').onclick=()=>{atual={tela:'inicio'};pilha=[];render()};
+  $('#rAdd').onclick=async()=>{
+    if(ja){const mudou=ja.nQ!==o.nQ||ja.nAlt!==o.nAlt;
+      if(mudou&&ja.res.length&&!await pergunta('O número de questões mudou e você já corrigiu cartões. As notas antigas podem ficar erradas. Atualizar mesmo assim?','Sim, atualizar'))return;
+      Object.assign(ja,{nome:o.nome,nQ:o.nQ,nAlt:o.nAlt,disc:o.disc,gab:o.gab});DB.ativa=ja.id;salvar();toast('Prova atualizada');irInicioProva();return}
+    const p={id:o.id,nome:o.nome,turma:($('#rTurma').value||'').trim(),nQ:o.nQ,nAlt:o.nAlt,disc:o.disc,gab:o.gab,alunos:'',res:[],criada:Date.now(),recebida:true,impresso:true};
+    DB.provas.push(p);DB.ativa=p.id;salvar();toast('Prova adicionada');irInicioProva();
+  };
+};
 
 /* ---- editor de disciplinas (usado no assistente e nos ajustes) ---- */
 function discHTML(t,aberto){
@@ -608,27 +676,46 @@ TELAS.assist=a=>{
 };
 
 /* ---- prova (passos) ---- */
-function proximoPasso(p){const gabOk=p.gab.length===p.nQ&&p.gab.every(v=>v!==-1);if(!p.impresso)return 1;if(!gabOk)return 2;return 3}
+function proximoPasso(p){const gabOk=p.gab.length===p.nQ&&p.gab.every(v=>v!==-1);if(!p.impresso)return 1;if(!gabOk)return 2;if(!p.enviada&&!p.res.length)return 3;return 4}
 TELAS.prova=()=>{
   const p=prova();if(!p){atual={tela:'inicio'};return render()}
   titulo(p.nome);
-  const gabN=p.gab.filter(v=>v!==-1).length,gabOk=gabN===p.nQ,nx=proximoPasso(p);
-  const passo=(n,ic,tit,sub,feito)=>`<button class="passo ${n===nx?'prox':''} ${feito?'feito':''}" id="s${n}"><span class="ic">${ic}</span><span><b>${tit}</b><small>${sub}</small></span>${n===nx?'<span class="selo">PRÓXIMO PASSO</span>':feito?'<span class="ok-ic">✓</span>':''}</button>`;
-  $('#tela').innerHTML=`<div class="muted" style="margin:0 4px 12px">${p.turma?esc(p.turma)+' · ':''}${p.nQ} questões · ${p.disc.length===1?'1 disciplina':p.disc.length+' disciplinas'}</div>
-  ${passo(1,IC.impressora,'1. Imprimir os cartões',p.impresso?'Cartão já baixado':'Baixe e imprima o cartão-resposta',p.impresso)}
-  ${passo(2,IC.gabarito,'2. Marcar o gabarito',gabOk?'Gabarito completo':gabN?`Faltam ${p.nQ-gabN} questões`:'Diga a resposta certa de cada questão',gabOk)}
-  ${passo(3,IC.camera,'3. Corrigir os cartões',p.res.length?`${p.res.length} já corrigidos. Toque para continuar`:'Fotografe o cartão de cada aluno',false)}
-  ${passo(4,IC.notas,'4. Ver as notas',p.res.length?`Notas de ${p.res.length} ${p.res.length===1?'aluno':'alunos'}`:'Aparecem depois de corrigir',p.res.length>0)}
-  <button class="btn sec" id="sCfg" style="margin-top:22px">${IC.ajustes} Mudar dados da prova</button>`;
-  $('#s1').onclick=()=>ir('cartao');$('#s2').onclick=()=>ir('gabarito');
-  $('#s3').onclick=async()=>{if(!gabOk){const r=await janela('Falta o gabarito',`Ainda faltam <b>${p.nQ-gabN}</b> questões no gabarito. Sem o gabarito o app não sabe o que está certo.`,[{t:'Marcar o gabarito agora'},{t:'Corrigir mesmo assim',cls:'sec'}]);if(r===0){ir('gabarito');return}}
+  const gabN=p.gab.filter(v=>v!==-1).length,gabOk=gabN===p.nQ;
+  const passo=(n,id,ic,tit,sub,feito,nx)=>`<button class="passo ${n===nx?'prox':''} ${feito?'feito':''}" id="${id}"><span class="ic">${ic}</span><span><b>${tit}</b><small>${sub}</small></span>${n===nx?'<span class="selo">PRÓXIMO PASSO</span>':feito?'<span class="ok-ic">✓</span>':''}</button>`;
+  const subCor=p.res.length?`${p.res.length} já corrigidos. Toque para continuar`:'Fotografe o cartão de cada aluno';
+  const subNot=p.res.length?`Notas de ${p.res.length} ${p.res.length===1?'aluno':'alunos'}`:'Aparecem depois de corrigir';
+  let h=`<div class="muted" style="margin:0 4px 12px">${p.recebida?'Prova recebida · ':''}${p.turma?esc(p.turma)+' · ':''}${p.nQ} questões · ${p.disc.length===1?'1 disciplina':p.disc.length+' disciplinas'}</div>`;
+  if(p.recebida){
+    h+=passo(1,'sCor',IC.camera,'1. Corrigir os cartões',subCor,false,1)+passo(2,'sNot',IC.notas,'2. Ver as notas',subNot,p.res.length>0,1)
+     +`<div style="height:12px"></div><button class="btn sec" id="sImp">${IC.impressora} Imprimir cartões em branco</button><button class="btn sec" id="sGab">${IC.gabarito} Ver o gabarito</button><button class="btn sec" id="sCfg">${IC.alunos} Turma e nomes dos alunos</button>`;
+  }else{
+    const nx=proximoPasso(p);
+    h+=passo(1,'sImp',IC.impressora,'1. Imprimir os cartões',p.impresso?'Cartão já baixado':'Baixe e imprima o cartão-resposta',p.impresso,nx)
+     +passo(2,'sGab',IC.gabarito,'2. Marcar o gabarito',gabOk?'Gabarito completo':gabN?`Faltam ${p.nQ-gabN} questões`:'Diga a resposta certa de cada questão',gabOk,nx)
+     +passo(3,'sEnv',IC.enviar,'3. Enviar para os colegas',p.enviada?'Já enviado. Toque para enviar de novo':'Os outros professores recebem a prova pronta para corrigir',!!p.enviada,nx)
+     +passo(4,'sCor',IC.camera,'4. Corrigir os cartões',subCor,false,nx)
+     +passo(5,'sNot',IC.notas,'5. Ver as notas',subNot,p.res.length>0,nx)
+     +`<button class="btn sec" id="sCfg" style="margin-top:22px">${IC.ajustes} Mudar dados da prova</button>`;
+  }
+  $('#tela').innerHTML=h;
+  $('#sImp').onclick=()=>ir('cartao');$('#sGab').onclick=()=>ir('gabarito');if($('#sEnv'))$('#sEnv').onclick=()=>ir('enviar');
+  $('#sCor').onclick=async()=>{if(!gabOk){const r=await janela('Falta o gabarito',`Ainda faltam <b>${p.nQ-gabN}</b> questões no gabarito. Sem o gabarito o app não sabe o que está certo.`,[{t:'Marcar o gabarito agora'},{t:'Corrigir mesmo assim',cls:'sec'}]);if(r===0){ir('gabarito');return}}
     corrigirCartao('corrigir')};
-  $('#s4').onclick=()=>ir('notas');$('#sCfg').onclick=()=>ir('config');
+  $('#sNot').onclick=()=>ir('notas');$('#sCfg').onclick=()=>ir('config');
 };
 
 /* ---- ajustes ---- */
 TELAS.config=()=>{
-  const p=prova();titulo('Dados da prova');
+  const p=prova();
+  if(p.recebida){titulo('Turma e alunos');
+    $('#tela').innerHTML=`<div class="card"><div class="mini">PROVA</div><b>${esc(p.nome)}</b><p class="muted" style="margin-bottom:0">As questões e o gabarito vêm do colega que criou a prova. Se ele mudar alguma coisa, peça o link de novo e toque em <b>Receber prova</b>.</p></div>
+    <div class="card"><label style="margin-top:0">Sua turma</label><input id="fTurma" value="${esc(p.turma)}" maxlength="20" placeholder="Ex.: 2º A">
+    <label>Nomes dos alunos</label><p class="muted" style="margin-top:0">Um nome por linha, na ordem da chamada.</p><textarea id="fAl" placeholder="Ana Souza&#10;Bruno Lima">${esc(p.alunos)}</textarea></div>
+    <button class="btn verde" id="fSalvar">Salvar</button><button class="btn perigo" id="fApagar" style="margin-top:30px">Apagar esta prova deste celular</button>`;
+    $('#fSalvar').onclick=()=>{p.turma=$('#fTurma').value.trim();p.alunos=$('#fAl').value;salvar();toast('Salvo');voltar()};
+    $('#fApagar').onclick=async()=>{if(!await pergunta('Apagar a prova "'+p.nome+'" e as notas dela deste celular? Não tem como desfazer.','Sim, apagar',true))return;DB.provas=DB.provas.filter(x=>x.id!==p.id);DB.ativa=null;salvar();atual={tela:'inicio'};pilha=[];render()};
+    return}
+  titulo('Dados da prova');
   const t=JSON.parse(JSON.stringify(p));
   $('#tela').innerHTML=`<div class="card"><label style="margin-top:0">Nome da prova</label><input id="fNome" value="${esc(t.nome)}" maxlength="48">
     <label>Turma</label><input id="fTurma" value="${esc(t.turma)}" maxlength="20" placeholder="Ex.: 2º A"></div>
@@ -891,9 +978,12 @@ TELAS.notas=()=>{
 
 /* ============ começo ============ */
 window.__T={cardSVG,processa,layout,corrigir,novaProva};
-if(!DB.cfg.viuTuto&&!DB.provas.length)atual={tela:'tutorial',arg:{i:0}};
+const hashRec=location.hash.indexOf('receber=')>=0?location.hash:'';
+if(hashRec){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}DB.cfg.viuTuto=true;pilha=[{tela:'inicio'}];atual={tela:'receber',arg:{codigo:hashRec}}}
+else if(!DB.cfg.viuTuto&&!DB.provas.length)atual={tela:'tutorial',arg:{i:0}};
 else if(DB.ativa&&prova()){pilha=[{tela:'inicio'}];atual={tela:'prova'}}
 else atual={tela:'inicio'};
+window.addEventListener('hashchange',()=>{if(location.hash.indexOf('receber=')>=0){const h=location.hash;try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}fecharCamera();pilha=[{tela:'inicio'}];atual={tela:'receber',arg:{codigo:h}};render()}});
 render();
 </script>
 </body>
