@@ -2,1527 +2,899 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Corretor de cartões-resposta</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f4e8c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Corretor">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-180.png">
+<title>Corretor de Cartões</title>
 <style>
-:root{
-  --papel:#E9ECEF;
-  --superficie:#FFFFFF;
-  --tinta:#1C242B;
-  --tinta-fraca:#5C6A75;
-  --linha:#CBD4DB;
-  --acao:#0F5F66;
-  --acao-clara:#E2F0F0;
-  --duvida:#B5820B;
-  --duvida-clara:#FCF3DC;
-  --erro:#9E2A24;
-  --ok:#1F7A55;
-  --d1:#2A6F97;
-  --d2:#6D4C9F;
-  --d3:#217A5B;
-  --d4:#A63D5A;
-  --r:10px;
-  --sombra:0 1px 2px rgba(28,36,43,.10), 0 6px 18px rgba(28,36,43,.06);
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{
-  background:var(--papel);
-  color:var(--tinta);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  font-size:16px;
-  line-height:1.45;
-  padding-bottom:86px;
-  -webkit-text-size-adjust:100%;
-}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
-.topo{
-  position:sticky;top:0;z-index:20;
-  background:var(--tinta);color:#fff;
-  padding:12px 16px calc(12px + env(safe-area-inset-top,0px));
-  padding-top:calc(12px + env(safe-area-inset-top,0px));
-}
-.topo h1{margin:0;font-size:17px;font-weight:600;letter-spacing:.01em}
-.topo p{margin:2px 0 0;font-size:12.5px;color:#A8B6C0;letter-spacing:.04em;text-transform:uppercase}
-main{max-width:760px;margin:0 auto;padding:14px 14px 24px}
-.tela{display:none}
-.tela.ativa{display:block}
-.cartao{
-  background:var(--superficie);border:1px solid var(--linha);border-radius:var(--r);
-  padding:14px;margin-bottom:14px;box-shadow:var(--sombra);
-}
-h2{font-size:15px;margin:0 0 4px;letter-spacing:.01em}
-.legenda{font-size:13.5px;color:var(--tinta-fraca);margin:0 0 12px}
-label{font-size:13px;color:var(--tinta-fraca);display:block;margin-bottom:4px}
-input[type=text],input[type=number],select{
-  width:100%;padding:9px 10px;border:1px solid var(--linha);border-radius:8px;
-  background:#fff;color:var(--tinta);font-size:16px;font-family:inherit;
-}
-input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #0F5F6655;outline-offset:1px}
-.bt{
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  padding:11px 14px;border-radius:9px;border:1px solid var(--acao);
-  background:var(--acao);color:#fff;font-size:15px;font-weight:600;
-  font-family:inherit;cursor:pointer;min-height:44px;
-}
-.bt.secundario{background:#fff;color:var(--acao)}
-.bt.neutro{background:#fff;color:var(--tinta);border-color:var(--linha)}
-.bt.perigo{background:#fff;color:var(--erro);border-color:#E0B7B4}
-.bt[disabled]{opacity:.45;cursor:not-allowed}
-.bt.largo{width:100%}
-.linha-bts{display:flex;gap:8px;flex-wrap:wrap}
-.linha-bts>.bt{flex:1 1 auto}
-.aviso{
-  border-left:4px solid var(--duvida);background:var(--duvida-clara);
-  padding:10px 12px;border-radius:6px;font-size:13.5px;margin:10px 0;
-}
-.aviso.erro{border-left-color:var(--erro);background:#FBEDEC}
-.aviso.ok{border-left-color:var(--ok);background:#E9F5EF}
-.abas{
-  position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;
-  background:var(--superficie);border-top:1px solid var(--linha);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-}
-.abas button{
-  flex:1;background:none;border:0;padding:9px 4px 10px;font-family:inherit;
-  font-size:11.5px;color:var(--tinta-fraca);cursor:pointer;letter-spacing:.03em;
-  text-transform:uppercase;font-weight:600;border-top:3px solid transparent;margin-top:-1px;
-}
-.abas button .num{display:block;font-size:17px;font-weight:700;letter-spacing:0;text-transform:none}
-.abas button.ativa{color:var(--acao);border-top-color:var(--acao)}
-.grade-gab{display:flex;flex-direction:column;gap:4px}
-.q{
-  display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:8px;
-  background:#fff;border:1px solid transparent;
-}
-.q:nth-child(odd){background:#F4F6F7}
-.q.duvida{background:var(--duvida-clara);border-color:#E8D49A}
-.q .n{width:30px;text-align:right;font-size:13.5px;color:var(--tinta-fraca);flex:none}
-.q .pt{width:9px;height:9px;border-radius:50%;flex:none}
-.alts{display:flex;gap:4px;flex:1;justify-content:flex-end}
-.alts button{
-  width:38px;height:38px;border-radius:8px;border:1px solid var(--linha);
-  background:#fff;color:var(--tinta-fraca);font-size:15px;font-weight:600;
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:pointer;
-}
-.alts button.sel{background:var(--acao);border-color:var(--acao);color:#fff}
-.alts button.nula{font-size:13px}
-.discs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.disc-campo{display:flex;align-items:center;gap:8px}
-.disc-campo .pt{width:12px;height:12px;border-radius:50%;flex:none}
-.pill{
-  display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;
-  background:var(--acao-clara);color:var(--acao);font-weight:600;letter-spacing:.02em;
-}
-.pill.pendente{background:#EEF1F3;color:var(--tinta-fraca)}
-.pill.alerta{background:var(--duvida-clara);color:var(--duvida)}
-.tela-canvas{position:relative;background:#20272D;border-radius:8px;overflow:hidden;line-height:0}
-.tela-canvas canvas.folha{display:block;width:100%;touch-action:none}
-.lupa{
-  position:absolute;top:8px;right:8px;width:112px;height:112px;border-radius:8px;
-  border:2px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.4);display:none;background:#fff;
-}
-.lupa.ativa{display:block}
-.lupa.esquerda{right:auto;left:8px}
-.passo{
-  display:flex;align-items:baseline;gap:8px;font-size:14px;margin:12px 0 8px;
-}
-.passo .idx{
-  font-family:ui-monospace,monospace;font-size:12px;background:var(--tinta);color:#fff;
-  border-radius:5px;padding:2px 6px;flex:none;
-}
-.blocos{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
-.bloco{display:flex;align-items:center;gap:8px;font-size:14px}
-.bloco input{width:74px;text-align:center}
-.bloco .rot{font-size:13px;color:var(--tinta-fraca);width:66px;flex:none}
-.bloco button{
-  border:1px solid var(--linha);background:#fff;border-radius:8px;width:38px;height:38px;
-  font-size:17px;color:var(--erro);cursor:pointer;flex:none;
-}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--linha)}
-th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--tinta-fraca);font-weight:600}
-td.nota{font-family:ui-monospace,monospace;text-align:right;white-space:nowrap}
-.rolagem{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.ajustes{border-top:1px solid var(--linha);margin-top:12px;padding-top:12px}
-.ajustes summary{font-size:13.5px;color:var(--acao);cursor:pointer;font-weight:600}
-.slider-linha{margin-top:10px}
-.slider-linha .valor{float:right;font-family:ui-monospace,monospace;font-size:13px;color:var(--tinta-fraca)}
-input[type=range]{width:100%;accent-color:var(--acao)}
-.resumo-notas{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
-.nota-caixa{border:1px solid var(--linha);border-radius:9px;padding:9px 10px;background:#fff}
-.nota-caixa .nome{font-size:12px;color:var(--tinta-fraca);display:flex;align-items:center;gap:6px}
-.nota-caixa .nome .pt{width:9px;height:9px;border-radius:50%;flex:none}
-.nota-caixa .v{font-family:ui-monospace,monospace;font-size:23px;font-weight:700;line-height:1.1}
-.nota-caixa .v small{font-size:12px;font-weight:400;color:var(--tinta-fraca)}
-.arquivo{display:none}
-.vazio{text-align:center;color:var(--tinta-fraca);font-size:14px;padding:22px 8px}
-.oculto{display:none !important}
-@media (prefers-reduced-motion:no-preference){
-  .bt,.alts button{transition:background .12s ease,color .12s ease,border-color .12s ease}
-}
-@media (min-width:560px){
-  .alts button{width:44px;height:42px}
-  .resumo-notas{grid-template-columns:repeat(4,1fr)}
+:root{--azul:#1f4e8c;--azul2:#e6eef9;--verde:#17824a;--verde2:#e1f3e8;--verm:#c0392b;--verm2:#fbe9e7;--amar:#8a6200;--amar2:#fff3cd;--txt:#18202e;--cinza:#5b6475;--borda:#d5dbe6;--fundo:#f2f4f8;--fs:19px}
+body.grande{--fs:22px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--fundo);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:var(--fs);line-height:1.4}
+header.top{position:sticky;top:0;background:var(--azul);color:#fff;padding:8px 8px;display:flex;align-items:center;gap:4px;z-index:5;padding-top:max(8px,env(safe-area-inset-top))}
+header.top button{background:rgba(255,255,255,.14);border:0;color:#fff;font-size:.85em;font-weight:600;padding:10px 12px;border-radius:10px;font-family:inherit;white-space:nowrap}
+header.top h1{font-size:1em;margin:0 6px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bAjuda{width:44px;height:44px;padding:0;border-radius:50%;font-size:1.1em}
+main{padding:14px;max-width:720px;margin:0 auto;padding-bottom:90px}
+.card{background:#fff;border:1px solid var(--borda);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h2{font-size:1.1em;margin:0 0 8px}
+h2.grande{font-size:1.35em;margin:6px 0 14px;line-height:1.25}
+.muted{color:var(--cinza);font-size:.88em}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:60px;padding:14px;border-radius:14px;border:0;background:var(--azul);color:#fff;font-size:1em;font-weight:700;margin:10px 0;cursor:pointer;font-family:inherit;text-align:center}
+.btn svg{width:30px;height:30px;flex:none}
+.btn.sec{background:var(--azul2);color:var(--azul)}
+.btn.verde{background:var(--verde)}
+.btn.perigo{background:var(--verm2);color:var(--verm);min-height:52px;font-size:.9em}
+.btn.leve{background:transparent;color:var(--azul);min-height:48px;text-decoration:underline;font-weight:600;font-size:.9em}
+.btn.peq{min-height:50px;font-size:.9em}
+.linha{display:flex;gap:10px}.linha>*{flex:1}
+.passo{position:relative;display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;border:2px solid var(--borda);border-radius:18px;padding:16px;margin-bottom:12px;font-size:1em;color:var(--txt);font-family:inherit;cursor:pointer;min-height:96px}
+.passo .ic{width:62px;height:62px;border-radius:16px;background:var(--azul2);color:var(--azul);display:flex;align-items:center;justify-content:center;flex:none}
+.passo .ic svg{width:40px;height:40px}
+.passo b{display:block;font-size:1.05em}
+.passo small{display:block;color:var(--cinza);font-size:.82em;margin-top:3px}
+.passo.feito .ic{background:var(--verde2);color:var(--verde)}
+.passo.prox{border-color:var(--azul);box-shadow:0 0 0 4px rgba(31,78,140,.15);animation:pulsa 1.8s ease-in-out infinite}
+@keyframes pulsa{50%{box-shadow:0 0 0 8px rgba(31,78,140,.06)}}
+.selo{position:absolute;top:-11px;right:14px;background:var(--azul);color:#fff;font-size:.62em;font-weight:800;padding:4px 10px;border-radius:12px;letter-spacing:.03em}
+.feito .selo{background:var(--verde)}
+.ok-ic{width:30px;height:30px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;flex:none;margin-left:auto;font-weight:800}
+label{display:block;font-weight:700;margin:16px 0 8px}
+input,select,textarea{width:100%;padding:14px;border:2px solid var(--borda);border-radius:12px;font-size:1em;background:#fff;font-family:inherit;color:var(--txt)}
+input:focus,textarea:focus{outline:none;border-color:var(--azul)}
+input.falta{border-color:var(--verm);background:var(--verm2)}
+textarea{min-height:150px}
+.stepper{display:flex;align-items:stretch;gap:10px}
+.stepper button{width:72px;min-height:72px;border-radius:16px;border:0;background:var(--azul2);color:var(--azul);font-size:2em;font-weight:700;font-family:inherit}
+.stepper input{text-align:center;font-size:1.8em;font-weight:800;padding:6px}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.chips button{min-width:64px;min-height:56px;padding:0 14px;border-radius:14px;border:2px solid var(--borda);background:#fff;font-size:1em;font-weight:700;font-family:inherit;color:var(--txt)}
+.chips button.on{background:var(--azul);border-color:var(--azul);color:#fff}
+.escolha{display:block;width:100%;text-align:left;background:#fff;border:3px solid var(--borda);border-radius:16px;padding:16px;margin-bottom:12px;font-family:inherit;font-size:1em;color:var(--txt)}
+.escolha.on{border-color:var(--azul);background:var(--azul2)}
+.escolha .bol{display:flex;gap:8px;margin-top:10px}
+.escolha .bol span{width:38px;height:38px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:.8em;color:#777;background:#fff}
+.disc{border:2px solid var(--borda);border-radius:14px;padding:12px;margin-bottom:12px;background:#fafbfd}
+.disc .det{font-size:.85em;color:var(--cinza);margin-top:8px}
+.disc .avanc{display:flex;gap:8px;margin-top:10px}
+.disc .avanc>div{flex:1}
+.disc .avanc input{padding:10px;text-align:center}
+.mini{font-size:.72em;color:var(--cinza);font-weight:700;margin-bottom:4px}
+.progresso{display:flex;gap:6px;margin:4px 0 10px}
+.progresso i{flex:1;height:8px;border-radius:4px;background:var(--borda)}
+.progresso i.on{background:var(--azul)}
+.aviso{background:var(--amar2);border:2px solid #f0d58a;border-radius:14px;padding:14px;margin-bottom:12px;font-size:.92em}
+.okbox{background:var(--verde2);border:2px solid #a9dbbd;border-radius:14px;padding:14px;margin-bottom:12px;font-size:.92em}
+.qrow{display:flex;align-items:center;gap:5px;padding:8px 2px;border-bottom:1px solid #eef0f5}
+.qrow .st{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:3px}.qrow .st .tag{white-space:normal}
+.qrow.duv{background:var(--amar2);border-radius:10px;border-bottom:0;margin-bottom:6px}
+.qrow .qn{width:32px;font-weight:800;text-align:right;flex:none;margin-right:2px}
+.chip{width:44px;height:44px;border-radius:50%;border:2px solid #aab3c5;background:#fff;font-weight:800;font-size:.9em;color:#4a5266;flex:none;font-family:inherit;padding:0}
+.chip.on{background:var(--azul);border-color:var(--azul);color:#fff}
+.chip.certo{background:var(--verde);border-color:var(--verde);color:#fff}
+.chip.errado{background:var(--verm);border-color:var(--verm);color:#fff}
+.chip.gab{border-color:var(--verde);border-width:4px;color:var(--verde)}
+.chip.anul{width:auto;flex:0 1 auto;padding:0 6px;border-radius:22px;font-size:.62em;margin-left:auto}
+.chip.anul.on{background:#555;border-color:#555}
+.tag{font-size:.68em;padding:3px 8px;border-radius:10px;background:#eceef2;color:#4a5266;margin-left:4px;white-space:nowrap;font-weight:700}
+.tag.m{background:var(--verm2);color:var(--verm)}
+.tag.d{background:var(--amar2);color:var(--amar)}
+table{border-collapse:collapse;width:100%;font-size:.85em}
+th,td{padding:10px 8px;border-bottom:1px solid #eef0f5;text-align:center;white-space:nowrap}
+th{background:#f4f6fa;font-size:.8em;color:#4a5266}
+td.nome,th.nome{text-align:left;white-space:normal;min-width:120px}
+.tabwrap{overflow-x:auto;border:1px solid var(--borda);border-radius:14px;background:#fff}
+tr.click{cursor:pointer}
+.barra{height:12px;background:#eef0f5;border-radius:6px;overflow:hidden}
+.barra i{display:block;height:100%}
+.notas{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.notas div{background:var(--azul2);border-radius:12px;padding:8px 12px;font-size:.78em;min-width:30%}
+.notas div b{font-size:1.6em;display:block;color:var(--azul)}
+.ilus{display:flex;justify-content:center;margin:6px 0 10px;color:var(--azul)}
+.ilus svg{width:150px;height:150px}
+.centro{text-align:center}
+.grandeOk{width:96px;height:96px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;margin:14px auto}
+.grandeOk svg{width:60px;height:60px}
+details{background:#fff;border:1px solid var(--borda);border-radius:14px;margin-bottom:14px}
+details summary{padding:16px;font-weight:700;cursor:pointer;color:var(--azul);list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸ "}
+details[open] summary::before{content:"▾ "}
+details .dentro{padding:0 10px 10px}
+#toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#18202e;color:#fff;padding:14px 20px;border-radius:26px;font-size:.9em;z-index:70;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+#modal{position:fixed;inset:0;background:rgba(10,15,30,.6);z-index:60;display:none;align-items:center;justify-content:center;padding:18px}
+#modal.on{display:flex}
+#modal .mbox{background:#fff;border-radius:18px;padding:20px;max-width:460px;width:100%;max-height:90vh;overflow:auto}
+#modal h3{margin:0 0 10px;font-size:1.15em}
+#modal .mtxt{margin:0 0 8px;white-space:pre-line}
+#modal ol{padding-left:22px;margin:8px 0}#modal li{margin:8px 0}
+#carregando{position:fixed;inset:0;background:rgba(255,255,255,.9);z-index:65;display:none;align-items:center;justify-content:center;flex-direction:column;font-weight:700;font-size:1.1em;color:var(--azul)}
+#carregando.on{display:flex}
+.giro{width:56px;height:56px;border:6px solid var(--azul2);border-top-color:var(--azul);border-radius:50%;animation:gira 1s linear infinite;margin-bottom:16px}
+@keyframes gira{to{transform:rotate(360deg)}}
+/* câmera */
+#cam{position:fixed;inset:0;background:#000;z-index:20;display:none;flex-direction:column}
+#cam.on{display:flex}
+#camBox{position:relative;flex:1;overflow:hidden}
+#camBox video,#camBox canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+#camMsg{position:absolute;left:12px;right:12px;top:max(12px,env(safe-area-inset-top));background:rgba(0,0,0,.7);color:#fff;padding:14px 16px;border-radius:14px;font-size:1em;text-align:center;font-weight:700}
+#camMsg.verde{background:rgba(23,130,74,.95)}
+#camBar{display:flex;gap:8px;padding:10px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:#111}
+#camBar button{flex:1;min-height:58px;border-radius:14px;border:0;background:#2b2f3a;color:#fff;font-size:.85em;font-weight:700;font-family:inherit}
+#camCont{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.65);color:#fff;padding:8px 14px;border-radius:18px;font-size:.8em;font-weight:700}
+.cardprev{background:#fff;border:1px solid var(--borda);border-radius:12px;overflow:hidden}
+.cardprev svg{width:100%;height:auto;display:block}
+canvas#prev{width:100%;border-radius:12px;border:1px solid var(--borda);display:block;background:#fff}
+#printArea{display:none}
+@media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{background:#fff}
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block}
+  #printArea svg{width:210mm;height:297mm;display:block}
 }
 </style>
 </head>
 <body>
+<header class="top"><button id="bVoltar" aria-label="Voltar">&#8249; Voltar</button><h1 id="titulo">Corretor de Cartões</h1><button id="bAjuda" aria-label="Ajuda">?</button></header>
+<main id="tela"></main>
 
-<header class="topo">
-  <h1>Corretor de cartões-resposta</h1>
-  <p id="topo-sub">Leitura por foto, conferência e notas por disciplina</p>
-</header>
-
-<main>
-
-  <!-- ============ PROVA ============ -->
-  <section id="tab-prova" class="tela ativa">
-    <div class="cartao">
-      <h2>Disciplinas</h2>
-      <p class="legenda">Quatro disciplinas na mesma prova. Os nomes aparecem nas notas e no arquivo exportado.</p>
-      <div class="discs" id="campos-disciplinas"></div>
-    </div>
-
-    <div class="cartao">
-      <h2>Gabarito <span id="pill-gab" class="pill pendente">0 de 40</span></h2>
-      <p class="legenda">Toque na alternativa correta de cada questão. O símbolo de anulada dá o ponto a todos.</p>
-      <div class="linha-bts" style="margin-bottom:12px">
-        <button class="bt neutro" id="bt-avancado">Trocar disciplina por questão</button>
-        <button class="bt neutro" id="bt-limpar-gab">Limpar gabarito</button>
-      </div>
-      <div id="alerta-disc"></div>
-      <div class="grade-gab" id="grade-gabarito"></div>
-    </div>
-
-    <div class="cartao">
-      <h2>Configuração salva</h2>
-      <p class="legenda">Guarde o gabarito e a calibração num arquivo para reabrir depois ou usar em outro aparelho.</p>
-      <div class="linha-bts">
-        <button class="bt secundario" id="bt-exportar-config">Salvar em arquivo</button>
-        <button class="bt secundario" id="bt-importar-config">Abrir arquivo</button>
-      </div>
-      <input type="file" id="arq-config" class="arquivo" accept="application/json,.json">
-    </div>
-  </section>
-
-  <!-- ============ CARTÃO ============ -->
-  <section id="tab-cartao" class="tela">
-    <div class="cartao">
-      <h2>Estrutura do cartão <span id="pill-calib" class="pill pendente">sem calibração</span></h2>
-      <p class="legenda">Cada bloco é um conjunto de questões impresso em sequência, sem vão no meio. O padrão já corresponde ao cartão de 40 questões em cinco colunas.</p>
-      <div class="blocos" id="lista-blocos"></div>
-      <div class="linha-bts">
-        <button class="bt neutro" id="bt-add-bloco">Adicionar bloco</button>
-        <button class="bt neutro" id="bt-blocos-padrao">Voltar ao padrão</button>
-      </div>
-      <div id="alerta-blocos"></div>
-    </div>
-
-    <div class="cartao">
-      <h2>Calibração</h2>
-      <p class="legenda">Feita uma vez, sobre uma foto do cartão em branco. Depois disso a correção do dia a dia pede só os quatro cantos.</p>
-
-      <div id="cal-passo-foto">
-        <button class="bt largo" id="bt-foto-calib">Escolher foto do cartão em branco</button>
-        <input type="file" id="arq-calib" class="arquivo" accept="image/*">
-      </div>
-
-      <div id="cal-passo-canvas" class="oculto">
-        <div class="passo"><span class="idx mono" id="cal-idx">1</span><span id="cal-instrucao"></span></div>
-        <div class="tela-canvas">
-          <canvas id="cal-canvas" class="folha"></canvas>
-          <canvas id="cal-lupa" class="lupa" width="112" height="112"></canvas>
-        </div>
-        <div class="linha-bts" style="margin-top:10px">
-          <button class="bt neutro" id="cal-desfazer">Desfazer ponto</button>
-          <button class="bt" id="cal-avancar">Continuar</button>
-        </div>
-        <div class="linha-bts" style="margin-top:8px">
-          <button class="bt neutro" id="cal-recomecar">Recomeçar calibração</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ CORRIGIR ============ -->
-  <section id="tab-corrigir" class="tela">
-    <div class="cartao" id="cor-bloqueio">
-      <h2>Antes de corrigir</h2>
-      <div id="cor-pendencias"></div>
-    </div>
-
-    <div class="cartao" id="cor-passo-foto">
-      <h2>Nova prova</h2>
-      <p class="legenda">Cartão apoiado na mesa, área de respostas inteira no enquadramento, celular de frente.</p>
-      <p class="legenda" id="cor-referencias"></p>
-      <button class="bt largo" id="bt-foto-prova">Escolher foto da prova</button>
-      <input type="file" id="arq-prova" class="arquivo" accept="image/*">
-    </div>
-
-    <div class="cartao oculto" id="cor-passo-cantos">
-      <h2>Pontos de referência</h2>
-      <p class="legenda" id="cor-instrucao"></p>
-      <div class="tela-canvas">
-        <canvas id="cor-canvas" class="folha"></canvas>
-        <canvas id="cor-lupa" class="lupa" width="112" height="112"></canvas>
-      </div>
-      <div class="linha-bts" style="margin-top:10px">
-        <button class="bt neutro" id="cor-desfazer">Desfazer ponto</button>
-        <button class="bt" id="cor-ler" disabled>Ler respostas</button>
-      </div>
-      <div class="linha-bts" style="margin-top:8px">
-        <button class="bt neutro" id="cor-trocar-foto">Trocar foto</button>
-      </div>
-    </div>
-
-    <div class="cartao oculto" id="cor-passo-conferencia">
-      <h2>Conferência <span id="pill-duvidas" class="pill">0 dúvidas</span></h2>
-      <p class="legenda">Verde é a marcação lida. Amarelo é questão que precisa do seu olho. Toque para corrigir.</p>
-      <div class="tela-canvas"><canvas id="cor-mapa" class="folha"></canvas></div>
-
-      <div class="resumo-notas" id="resumo-notas"></div>
-
-      <div style="margin:12px 0">
-        <label for="rotulo">Identificação da prova</label>
-        <input type="text" id="rotulo" placeholder="Número de chamada ou nome">
-      </div>
-
-      <div class="linha-bts">
-        <button class="bt largo" id="bt-salvar-prova">Salvar prova e notas</button>
-      </div>
-
-      <details class="ajustes">
-        <summary>Ajustes de leitura</summary>
-        <div class="slider-linha">
-          <label for="sl-limiar">Quanto a casinha precisa escurecer para contar como marcada <span class="valor" id="v-limiar"></span></label>
-          <input type="range" id="sl-limiar" min="4" max="35" step="1">
-        </div>
-        <div class="slider-linha">
-          <label for="sl-tol">Quanto a segunda casinha mais escura pode chegar perto antes de virar dúvida <span class="valor" id="v-tol"></span></label>
-          <input type="range" id="sl-tol" min="25" max="90" step="5">
-        </div>
-        <p class="legenda" style="margin-top:10px">Se muitas questões marcadas estiverem virando dúvida, abaixe o primeiro ajuste. Se casinhas em branco estiverem sendo lidas como resposta, suba.</p>
-        <button class="bt neutro" id="bt-refazer-cantos" style="margin-top:6px">Marcar os cantos de novo</button>
-      </details>
-    </div>
-  </section>
-
-  <!-- ============ NOTAS ============ -->
-  <section id="tab-notas" class="tela">
-    <div class="cartao">
-      <h2>Notas lançadas <span id="pill-provas" class="pill pendente">0 provas</span></h2>
-      <div id="tabela-notas"></div>
-      <div class="linha-bts" style="margin-top:12px">
-        <button class="bt" id="bt-csv">Exportar arquivo de notas</button>
-        <button class="bt perigo" id="bt-limpar-notas">Apagar todas</button>
-      </div>
-      <p class="legenda" style="margin-top:10px">O arquivo sai em CSV com ponto e vírgula, que o Excel abre direto em colunas.</p>
-    </div>
-  </section>
-
-</main>
-
-<nav class="abas">
-  <button data-tab="tab-prova" class="ativa"><span class="num mono">1</span>Prova</button>
-  <button data-tab="tab-cartao"><span class="num mono">2</span>Cartão</button>
-  <button data-tab="tab-corrigir"><span class="num mono">3</span>Corrigir</button>
-  <button data-tab="tab-notas"><span class="num mono">4</span>Notas</button>
-</nav>
+<div id="cam">
+  <div id="camBox"><video id="video" playsinline muted autoplay></video><canvas id="ov"></canvas><div id="camMsg">Abrindo a câmera…</div><div id="camCont"></div></div>
+  <div id="camBar"><button id="cSair">&#8249; Sair</button><button id="cLuz">Lanterna</button><button id="cFoto">Tirar foto</button></div>
+</div>
+<input type="file" id="arqFoto" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="arqBackup" accept="application/json,.json" style="display:none">
+<div id="printArea"></div>
+<div id="toast"></div>
+<div id="modal"><div class="mbox"><h3 id="mTit"></h3><div class="mtxt" id="mTxt"></div><div id="mBot"></div></div></div>
+<div id="carregando"><div class="giro"></div><div id="carTxt">Lendo o cartão…</div></div>
 
 <script>
 "use strict";
+/* ============ armazenamento ============ */
+const CHAVE='corretor_cartoes_v1';
+const LET='ABCDE';
+let DB=carregar();
+function carregar(){try{const s=localStorage.getItem(CHAVE);if(s){const d=JSON.parse(s);if(d&&Array.isArray(d.provas))return d}}catch(e){}return{provas:[],ativa:null}}
+function salvar(){try{localStorage.setItem(CHAVE,JSON.stringify(DB))}catch(e){toast('Atenção: não consegui guardar os dados neste aparelho.')}}
+function prova(){return DB.provas.find(p=>p.id===DB.ativa)||null}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function $(s){return document.querySelector(s)}
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600)}
+function fmt(n){return (Math.round(n*10)/10).toFixed(1).replace('.',',')}
+function nomeAluno(p,num){if(num==null)return'';const l=(p.alunos||'').split('\n').map(s=>s.trim());return l[num-1]||''}
 
-/* ---------------------------------------------------------------
-   Estado
---------------------------------------------------------------- */
-var LETRAS = ["A","B","C","D","E"];
-var CORES_DISC = ["#2A6F97","#6D4C9F","#217A5B","#A63D5A"];
-var BLOCOS_PADRAO = [[1,6],[7,9],[10,15],[16,18],[19,24],[25,27],[28,33],[34,36],[37,40]];
+function novaProva(){
+  const p={id:uid(),nome:'Prova',turma:'',nQ:40,nAlt:5,disc:[],gab:[],alunos:'',res:[],criada:Date.now()};
+  p.disc=dividir(40,4);p.gab=Array(40).fill(-1);return p;
+}
+function dividir(nQ,k){const out=[];let ini=1;for(let i=0;i<k;i++){const tam=Math.floor(nQ/k)+(i<nQ%k?1:0);out.push({nome:'Disciplina '+(i+1),de:ini,ate:ini+tam-1,valor:10});ini+=tam}return out}
 
-var estado = {
-  disciplinas: ["Disciplina 1","Disciplina 2","Disciplina 3","Disciplina 4"],
-  gabarito: [],      // por questão: 0..4, "N" (anulada) ou null
-  discQ: [],         // por questão: 0..3
-  blocos: BLOCOS_PADRAO.map(function(b){ return b.slice(); }),
-  calib: null,       // { blocos:[[q0,q1]], celulas:[ [ {u,v} x5 ] x NQ ] }
-  limiar: 0.12,
-  tol: 0.55,
-  provas: []
-};
-var avancado = false;
-
-function nq(){
-  var m = 0;
-  for (var i=0;i<estado.blocos.length;i++) m = Math.max(m, estado.blocos[i][1]);
-  return m || 40;
-}
-function ajustarTamanhos(){
-  var n = nq();
-  while (estado.gabarito.length < n) estado.gabarito.push(null);
-  while (estado.discQ.length < n) estado.discQ.push(Math.min(3, Math.floor(estado.discQ.length/10)));
-  estado.gabarito.length = n;
-  estado.discQ.length = n;
-}
-function questoesDaDisciplina(d){
-  var r = [];
-  for (var q=0;q<estado.discQ.length;q++) if (estado.discQ[q]===d) r.push(q);
-  return r;
-}
-
-/* ---------------------------------------------------------------
-   Persistência opcional (não impede o uso off-line)
---------------------------------------------------------------- */
-function guardar(){
-  try{
-    if (window.storage && window.storage.set){
-      window.storage.set("corretor:estado", JSON.stringify({
-        disciplinas: estado.disciplinas, gabarito: estado.gabarito, discQ: estado.discQ,
-        blocos: estado.blocos, calib: estado.calib, limiar: estado.limiar,
-        tol: estado.tol, provas: estado.provas
-      }), false);
-    }
-  }catch(e){}
-}
-function restaurar(){
-  try{
-    if (window.storage && window.storage.get){
-      return window.storage.get("corretor:estado", false).then(function(r){
-        if (r && r.value){
-          var o = JSON.parse(r.value);
-          for (var k in o) if (Object.prototype.hasOwnProperty.call(o,k)) estado[k] = o[k];
-        }
-      }).catch(function(){});
-    }
-  }catch(e){}
-  return Promise.resolve();
-}
-
-/* ---------------------------------------------------------------
-   Utilidades
---------------------------------------------------------------- */
-function $(s){ return document.querySelector(s); }
-function el(tag, cls, txt){
-  var e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (txt !== undefined && txt !== null) e.textContent = txt;
-  return e;
-}
-function fmt(n){
-  if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
-  return n.toFixed(2).replace(".",",");
-}
-function mediana(v){
-  var s = v.slice().sort(function(a,b){return a-b;});
-  var m = s.length>>1;
-  return s.length%2 ? s[m] : (s[m-1]+s[m])/2;
-}
-
-/* Mapeamento projetivo do quadrado unitário para o quadrilátero da foto.
-   Ordem dos cantos: (0,0) (1,0) (1,1) (0,1). */
-function homografia(p){
-  var x0=p[0].x,y0=p[0].y, x1=p[1].x,y1=p[1].y, x2=p[2].x,y2=p[2].y, x3=p[3].x,y3=p[3].y;
-  var dx1=x1-x2, dx2=x3-x2, sx=x0-x1+x2-x3;
-  var dy1=y1-y2, dy2=y3-y2, sy=y0-y1+y2-y3;
-  var a,b,c,d,e,f,g,h;
-  if (Math.abs(sx)<1e-9 && Math.abs(sy)<1e-9){
-    a=x1-x0; b=x2-x1; c=x0; d=y1-y0; e=y2-y1; f=y0; g=0; h=0;
-  } else {
-    var den = dx1*dy2 - dx2*dy1;
-    if (Math.abs(den)<1e-12) den = 1e-12;
-    g = (sx*dy2 - dx2*sy)/den;
-    h = (dx1*sy - sx*dy1)/den;
-    a = x1-x0+g*x1; b = x3-x0+h*x3; c = x0;
-    d = y1-y0+g*y1; e = y3-y0+h*y3; f = y0;
+/* ============ correção ============ */
+function corrigir(p,resp){
+  const out=[];let tot=0;
+  for(const d of p.disc){
+    let ac=0,n=0;
+    for(let q=d.de;q<=d.ate;q++){const i=q-1;if(i<0||i>=p.nQ)continue;n++;const g=p.gab[i];
+      if(g===-3||(g>=0&&resp[i]===g))ac++;}
+    tot+=ac;out.push({nome:d.nome,ac,n,nota:n?d.valor*ac/n:0,valor:d.valor});
   }
-  return {a:a,b:b,c:c,d:d,e:e,f:f,g:g,h:h};
-}
-function mapear(H,u,v){
-  var w = H.g*u + H.h*v + 1;
-  if (Math.abs(w)<1e-12) w = 1e-12;
-  return { x:(H.a*u + H.b*v + H.c)/w, y:(H.d*u + H.e*v + H.f)/w };
+  return{disc:out,ac:tot};
 }
 
-function inverter3(m){
-  var a=m[0][0],b=m[0][1],c=m[0][2],d=m[1][0],e=m[1][1],f=m[1][2],g=m[2][0],h=m[2][1],i=m[2][2];
-  var A=e*i-f*h, B=-(d*i-f*g), C=d*h-e*g;
-  var det = a*A + b*B + c*C;
-  if (Math.abs(det) < 1e-12) det = 1e-12;
-  return [
-    [A/det, (c*h-b*i)/det, (b*f-c*e)/det],
-    [B/det, (a*i-c*g)/det, (c*d-a*f)/det],
-    [C/det, (b*g-a*h)/det, (a*e-b*d)/det]
-  ];
+/* ============ layout do cartão (milímetros) ============ */
+const MK=[[12,12],[198,12],[12,285],[198,285]]; // TL TR BL BR (centros)
+const MKS=10;
+const BAR={x:24,y:8.5,w:50,h:3.5};
+function layout(p){
+  const nQ=p.nQ,nA=p.nAlt,d=4.8,sp=6.6,rowH=7.0,top=62,bot=279,x0=17,x1=193;
+  const maxRows=Math.floor((bot-top)/rowH);
+  const colW=9+nA*sp;
+  const maxCols=Math.max(1,Math.floor((x1-x0+3)/(colW+3)));
+  let nCols=Math.min(maxCols,Math.max(Math.ceil(nQ/maxRows),Math.ceil(nQ/20),1));
+  const rows=Math.ceil(nQ/nCols);
+  const slot=(x1-x0)/nCols;
+  const qs=[];
+  for(let q=0;q<nQ;q++){
+    const c=Math.floor(q/rows),r=q%rows;
+    const cx0=x0+c*slot+(slot-colW)/2;
+    const cy=top+r*rowH+rowH/2;
+    const alts=[];for(let k=0;k<nA;k++)alts.push([cx0+9+sp*k+sp/2,cy]);
+    qs.push({q,c,r,cx0,cy,alts,colW});
+  }
+  const num=[];for(let row=0;row<2;row++){const y=[35,44][row];const a=[];for(let k=0;k<10;k++)a.push([131+6.6*k,y]);num.push(a)}
+  return{qs,num,d,rowH,colW,maxQ:maxCols*maxRows};
+}
+function maxQuestoes(nAlt){return layout({nQ:1,nAlt}).maxQ}
+
+function cardSVG(p,fill){
+  const L=layout(p),r=L.d/2;
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm" font-family="Arial,Helvetica,sans-serif">`;
+  s+=`<rect width="210" height="297" fill="#fff"/>`;
+  for(const[x,y]of MK)s+=`<rect x="${x-MKS/2}" y="${y-MKS/2}" width="${MKS}" height="${MKS}" fill="#000"/>`;
+  s+=`<rect x="${BAR.x}" y="${BAR.y}" width="${BAR.w}" height="${BAR.h}" fill="#000"/>`;
+  s+=`<text x="24" y="21.5" font-size="5" font-weight="700">CARTÃO-RESPOSTA</text>`;
+  s+=`<text x="24" y="27.5" font-size="3.4">${esc((p.nome||'').slice(0,48))}${p.turma?' · '+esc(p.turma.slice(0,20)):''}</text>`;
+  s+=`<text x="24" y="38" font-size="3.3">Nome:</text><line x1="35" y1="38.6" x2="111" y2="38.6" stroke="#000" stroke-width="0.25"/>`;
+  s+=`<text x="24" y="47" font-size="3.3">Turma:</text><line x1="36" y1="47.6" x2="68" y2="47.6" stroke="#000" stroke-width="0.25"/>`;
+  s+=`<text x="72" y="47" font-size="3.3">Data:</text><line x1="81" y1="47.6" x2="111" y2="47.6" stroke="#000" stroke-width="0.25"/>`;
+  s+=`<rect x="115" y="24" width="80" height="26" rx="2" fill="none" stroke="#000" stroke-width="0.3"/>`;
+  s+=`<text x="155" y="28.6" font-size="3" font-weight="700" text-anchor="middle">Nº DE CHAMADA</text>`;
+  const rot=['Dezena','Unidade'];
+  L.num.forEach((row,ri)=>{s+=`<text x="117" y="${row[0][1]+1}" font-size="2.6">${rot[ri]}</text>`;
+    row.forEach(([x,y],k)=>{s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#000" stroke-width="0.28"/><text x="${x}" y="${y+0.95}" font-size="2.7" text-anchor="middle" fill="#8c8c8c">${k}</text>`;
+      if(fill&&fill.num&&fill.num[ri]===k)s+=marca(x,y,fill,ri*10+k);});
+  });
+  s+=`<text x="24" y="56" font-size="2.9">Pinte todo o círculo com caneta preta ou azul escura. Não rasure. Duas marcações anulam a questão.</text>`;
+  for(const Q of L.qs){
+    const yTop=Q.cy-L.rowH/2;
+    if(Q.r%2===1)s+=`<rect x="${Q.cx0-1}" y="${yTop}" width="${Q.colW+2}" height="${L.rowH}" fill="#f0f0f0"/>`;
+    s+=`<text x="${Q.cx0+7.6}" y="${Q.cy+1.15}" font-size="3.2" font-weight="700" text-anchor="end">${String(Q.q+1).padStart(2,'0')}</text>`;
+    Q.alts.forEach(([x,y],k)=>{s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#000" stroke-width="0.28"/><text x="${x}" y="${y+0.95}" font-size="2.7" text-anchor="middle" fill="#8c8c8c">${LET[k]}</text>`;
+      if(fill&&fill.resp){const v=fill.resp[Q.q];if(v===k||(Array.isArray(v)&&v.includes(k)))s+=marca(x,y,fill,Q.q*7+k)}});
+  }
+  s+='</svg>';return s;
+}
+// usado só nos testes: simula uma marca de caneta
+function marca(x,y,fill,seed){const j=t=>((Math.sin(seed*12.9898+t*78.233)*43758.5453)%1+1)%1;
+  const dx=(j(1)-.5)*0.8,dy=(j(2)-.5)*0.8,rr=1.7+j(3)*0.6;return `<circle cx="${x+dx}" cy="${y+dy}" r="${rr}" fill="${fill.cor||'#1b2a6b'}" opacity="${fill.op||0.92}"/>`}
+
+/* ============ visão computacional ============ */
+function toGray(id){const d=id.data,n=id.width*id.height,g=new Uint8Array(n);for(let i=0,j=0;i<n;i++,j+=4)g[i]=(d[j]*77+d[j+1]*150+d[j+2]*29)>>8;return g}
+function downscale(g,w,h,f){if(f<=1)return{g,w,h};const W=Math.floor(w/f),H=Math.floor(h/f),o=new Uint8Array(W*H),ff=f*f;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){let s=0;for(let j=0;j<f;j++){const r=(y*f+j)*w+x*f;for(let i=0;i<f;i++)s+=g[r+i]}o[y*W+x]=s/ff}return{g:o,w:W,h:H}}
+
+function detectMarkers(g,w,h){
+  const W1=w+1,I=new Uint32Array(W1*(h+1));
+  for(let y=0;y<h;y++){let row=0;for(let x=0;x<w;x++){row+=g[y*w+x];I[(y+1)*W1+x+1]=I[y*W1+x+1]+row}}
+  const r=Math.max(8,Math.round(Math.max(w,h)/16));
+  const bin=new Uint8Array(w*h);
+  for(let y=0;y<h;y++){const y0=Math.max(0,y-r),y1=Math.min(h,y+r+1);
+    for(let x=0;x<w;x++){const x0=Math.max(0,x-r),x1=Math.min(w,x+r+1);
+      const s=I[y1*W1+x1]-I[y0*W1+x1]-I[y1*W1+x0]+I[y0*W1+x0];const cnt=(y1-y0)*(x1-x0);
+      if(g[y*w+x]*cnt<s*0.68)bin[y*w+x]=1}}
+  const lab=new Uint8Array(w*h),st=new Int32Array(w*h),comps=[];
+  for(let p=0;p<w*h;p++){
+    if(!bin[p]||lab[p])continue;
+    let sp=0;st[sp++]=p;lab[p]=1;let a=0,sx=0,sy=0,sxx=0,syy=0,sxy=0,mnx=w,mxx=0,mny=h,mxy=0;
+    while(sp){const q=st[--sp];const x=q%w,y=(q-x)/w;a++;sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;
+      if(x<mnx)mnx=x;if(x>mxx)mxx=x;if(y<mny)mny=y;if(y>mxy)mxy=y;
+      if(x>0&&bin[q-1]&&!lab[q-1]){lab[q-1]=1;st[sp++]=q-1}
+      if(x<w-1&&bin[q+1]&&!lab[q+1]){lab[q+1]=1;st[sp++]=q+1}
+      if(y>0&&bin[q-w]&&!lab[q-w]){lab[q-w]=1;st[sp++]=q-w}
+      if(y<h-1&&bin[q+w]&&!lab[q+w]){lab[q+w]=1;st[sp++]=q+w}}
+    if(a<16||a>w*h*0.03||mnx===0||mny===0||mxx===w-1||mxy===h-1)continue;
+    const mx=sx/a,my=sy/a,cxx=sxx/a-mx*mx,cyy=syy/a-my*my,cxy=sxy/a-mx*my;
+    const det=cxx*cyy-cxy*cxy;if(det<=0)continue;
+    const k=a/(12*Math.sqrt(det));
+    const tr=cxx+cyy,disc=Math.sqrt(Math.max(0,tr*tr/4-det)),l1=tr/2+disc,l2=tr/2-disc;
+    if(k<0.78||k>1.25||l2<=0||l1/l2>4)continue;
+    comps.push({a,x:mx,y:my});
+  }
+  comps.sort((p,q)=>q.a-p.a);
+  const C=comps.slice(0,14),n=C.length;let best=null;
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)for(let k=j+1;k<n;k++)for(let l=k+1;l<n;l++){
+    const o=ordena([C[i],C[j],C[k],C[l]]);if(!o)continue;const sc=pontua(o);if(sc!==null&&(!best||sc<best.sc))best={sc,q:o};}
+  if(!best)return null;const[a,b,c,d]=best.q;const ar=Math.abs((d.x-a.x)*(b.y-c.y)-(b.x-c.x)*(d.y-a.y))/2;
+  return ar>=0.1*w*h?best.q:null;
+}
+function ordena(P){let tl,tr,bl,br;let a=1e9,b=-1e9,c=-1e9,d=1e9;
+  for(const p of P){const s=p.x+p.y,t=p.x-p.y;if(s<a){a=s;tl=p}if(s>b){b=s;br=p}if(t>c){c=t;tr=p}if(t<d){d=t;bl=p}}
+  if(new Set([tl,tr,bl,br]).size<4)return null;return[tl,tr,bl,br]}
+function dist(p,q){return Math.hypot(p.x-q.x,p.y-q.y)}
+function pontua([tl,tr,bl,br]){
+  const poly=[tl,tr,br,bl];let sg=0;
+  for(let i=0;i<4;i++){const A=poly[i],B=poly[(i+1)%4],C=poly[(i+2)%4];const cr=(B.x-A.x)*(C.y-B.y)-(B.y-A.y)*(C.x-B.x);const s=Math.sign(cr);if(!s)return null;if(!sg)sg=s;else if(s!==sg)return null}
+  const top=dist(tl,tr),bot=dist(bl,br),lef=dist(tl,bl),rig=dist(tr,br);
+  if(Math.max(top/bot,bot/top)>1.7||Math.max(lef/rig,rig/lef)>1.7)return null;
+  const asp=(top+bot)/(lef+rig),esp=186/273,la=Math.abs(Math.log(asp/esp));if(la>0.4)return null;
+  const ar=[tl.a,tr.a,bl.a,br.a],mx=Math.max(...ar),mn=Math.min(...ar);if(mx/mn>2.8)return null;
+  const ms=Math.sqrt((tl.a+tr.a+bl.a+br.a)/4),ex=MKS*((top+bot)/2)/186,rt=ms/ex;if(rt<0.55||rt>1.65)return null;
+  const area=Math.abs((br.x-tl.x)*(tr.y-bl.y)-(tr.x-bl.x)*(br.y-tl.y))/2;
+  return la+Math.abs(Math.log(rt))+0.5*Math.log(mx/mn)-Math.log(area);
+}
+function refina(g,w,h,cx,cy,R){
+  const x0=Math.max(0,Math.floor(cx-R)),x1=Math.min(w-1,Math.ceil(cx+R)),y0=Math.max(0,Math.floor(cy-R)),y1=Math.min(h-1,Math.ceil(cy+R));
+  let mn=255,mx=0;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const v=g[y*w+x];if(v<mn)mn=v;if(v>mx)mx=v}
+  const t=(mn+mx)/2;let sw=0,sx=0,sy=0;
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const v=g[y*w+x];if(v<t){const wt=t-v;sw+=wt;sx+=wt*x;sy+=wt*y}}
+  return sw?{x:sx/sw,y:sy/sw}:{x:cx,y:cy};
+}
+function homografia(src,dst){
+  const A=[],b=[];
+  for(let i=0;i<4;i++){const[x,y]=src[i],[u,v]=dst[i];
+    A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}
+  for(let c=0;c<8;c++){let p=c;for(let r=c+1;r<8;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;
+    [A[c],A[p]]=[A[p],A[c]];[b[c],b[p]]=[b[p],b[c]];const d=A[c][c];if(Math.abs(d)<1e-12)return null;
+    for(let r=0;r<8;r++){if(r===c)continue;const f=A[r][c]/d;if(!f)continue;for(let k=c;k<8;k++)A[r][k]-=f*A[c][k];b[r]-=f*b[c]}}
+  return b.map((v,i)=>v/A[i][i]);
+}
+function aplica(H,x,y){const z=H[6]*x+H[7]*y+1;return[(H[0]*x+H[1]*y+H[2])/z,(H[3]*x+H[4]*y+H[5])/z]}
+function amostra(g,w,h,u,v){if(u<0||v<0||u>=w-1||v>=h-1)return 255;const x=u|0,y=v|0,fx=u-x,fy=v-y,i=y*w+x;
+  return g[i]*(1-fx)*(1-fy)+g[i+1]*fx*(1-fy)+g[i+w]*(1-fx)*fy+g[i+w+1]*fx*fy}
+function mediaCirculo(g,w,h,H,cx,cy,r){let s=0,n=0;const st=r/3.5;
+  for(let dy=-r;dy<=r+1e-6;dy+=st)for(let dx=-r;dx<=r+1e-6;dx+=st){if(dx*dx+dy*dy>r*r)continue;const[u,v]=aplica(H,cx+dx,cy+dy);s+=amostra(g,w,h,u,v);n++}
+  return s/n}
+function barraOk(g,w,h,H){let a=0,b=0,n=0;for(let x=BAR.x+3;x<=BAR.x+BAR.w-3;x+=4){
+  let[u,v]=aplica(H,x,BAR.y+BAR.h/2);a+=amostra(g,w,h,u,v);[u,v]=aplica(H,x,BAR.y+BAR.h+2.6);b+=amostra(g,w,h,u,v);n++}
+  return a/n<0.62*(b/n)}
+
+const LIM=0.2;
+function decide(d){
+  const ord=d.map((v,i)=>[v,i]).sort((a,b)=>b[0]-a[0]);const[d1,i1]=ord[0],d2=ord[1]?ord[1][0]:0;
+  let r,duv=false;
+  if(d1<LIM){r=-1;if(d1>LIM*0.6)duv=true}
+  else if(d2>LIM&&d2>0.55*d1){r=-2;if(d2<LIM*1.4||d2<0.75*d1)duv=true}
+  else{r=i1;if(d1<LIM*1.35||d2>0.4*d1)duv=true}
+  return{r,duv};
+}
+// escurecimento da bolinha em relação ao papel em volta dela (compensa sombra e luz irregular)
+function escuro(g,w,h,H,x,y,rs,faixa){
+  const v=mediaCirculo(g,w,h,H,x,y,rs),an=[];
+  for(let k=0;k<16;k++){const t=k*Math.PI/8;const[u,vv]=aplica(H,x+3.1*Math.cos(t),y+3.1*Math.sin(t));an.push(amostra(g,w,h,u,vv))}
+  an.sort((a,b)=>a-b);let bco=an[11];if(faixa)bco/=FAIXA/255;
+  return Math.max(0,1-v/Math.max(bco,1));
+}
+const FAIXA=0xf0;
+function processa(id,p){
+  const w=id.width,h=id.height,g=toGray(id);
+  const f=Math.max(1,Math.ceil(Math.max(w,h)/800));const sm=downscale(g,w,h,f);
+  const q=detectMarkers(sm.g,sm.w,sm.h);if(!q)return{ok:false,msg:'Não encontrei os 4 quadrados pretos do cartão.'};
+  let pts=q.map(c=>{const R=Math.sqrt(c.a)*f*0.9;return refina(g,w,h,c.x*f+(f-1)/2,c.y*f+(f-1)/2,R)});
+  let H=homografia(MK,pts.map(p=>[p.x,p.y]));
+  if(!H||!barraOk(g,w,h,H)){pts=[pts[3],pts[2],pts[1],pts[0]];H=homografia(MK,pts.map(p=>[p.x,p.y]));
+    if(!H||!barraOk(g,w,h,H))return{ok:false,msg:'Encontrei algo parecido, mas não é um cartão deste app.'}}
+  const L=layout(p),rs=L.d/2*0.62;
+  const Dq=L.qs.map(Q=>Q.alts.map(([x,y])=>escuro(g,w,h,H,x,y,rs,Q.r%2===1)));
+  const Dn=L.num.map(row=>row.map(([x,y])=>escuro(g,w,h,H,x,y,rs,false)));
+  const todos=Dq.flat().concat(Dn.flat()).sort((a,b)=>a-b),b0=todos[Math.floor(todos.length*0.25)];
+  const resp=[],duv=[];
+  for(const d of Dq){const D=decide(d.map(v=>v-b0));resp.push(D.r);duv.push(D.duv)}
+  const dig=Dn.map(d=>decide(d.map(v=>v-b0)));
+  let num=null,numDuv=dig[0].duv||dig[1].duv;
+  if(dig[1].r>=0&&dig[0].r!==-2){num=(dig[0].r>=0?dig[0].r:0)*10+dig[1].r;if(num===0)num=null}
+  else if(dig[0].r>=0&&dig[1].r===-1){num=null;numDuv=true}
+  if(dig[0].r===-2||dig[1].r===-2)numDuv=true;
+  return{ok:true,H,pts,resp,duv,num,numDuv};
+}
+function retifica(id,H,esc){
+  const W=Math.round(210*esc),Hh=Math.round(297*esc),c=document.createElement('canvas');c.width=W;c.height=Hh;
+  const cx=c.getContext('2d'),out=cx.createImageData(W,Hh),s=id.data,o=out.data,w=id.width,h=id.height;
+  for(let y=0;y<Hh;y++)for(let x=0;x<W;x++){const[u,v]=aplica(H,x/esc,y/esc);const ui=u|0,vi=v|0,j=(y*W+x)*4;
+    if(ui<0||vi<0||ui>=w||vi>=h){o[j]=o[j+1]=o[j+2]=200;o[j+3]=255;continue}const i=(vi*w+ui)*4;o[j]=s[i];o[j+1]=s[i+1];o[j+2]=s[i+2];o[j+3]=255}
+  cx.putImageData(out,0,0);return c;
 }
 
-/* Mapa do cartão para a foto, ancorado em quatro casinhas de referência.
-   refUnit são as posições dessas casinhas no cartão calibrado;
-   pontosFoto são os toques do professor na foto de agora. */
-function fazerMapa(pontosFoto, refUnit){
-  var H2 = homografia(pontosFoto);
-  var H1 = homografia(refUnit.map(function(p){ return {x:p.u, y:p.v}; }));
-  var Mi = inverter3([[H1.a,H1.b,H1.c],[H1.d,H1.e,H1.f],[H1.g,H1.h,1]]);
-  return function(u,v){
-    var w = Mi[2][0]*u + Mi[2][1]*v + Mi[2][2];
-    if (Math.abs(w) < 1e-12) w = 1e-12;
-    var s = (Mi[0][0]*u + Mi[0][1]*v + Mi[0][2])/w;
-    var t = (Mi[1][0]*u + Mi[1][1]*v + Mi[1][2])/w;
-    return mapear(H2, s, t);
+
+function resumo(a){if(a.length>12)return a.slice(0,12).join(', ')+'…';return a.join(', ')}
+function limpa(s){return (s||'prova').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase()||'prova'}
+function svgParaCanvas(svg,fn){toast('Gerando o arquivo…');const img=new Image();const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
+  img.onload=()=>{const c=document.createElement('canvas');c.width=2480;c.height=3508;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);fn(c)};
+  img.onerror=()=>toast('Não consegui gerar o arquivo');img.src=url}
+function pdfDeJpeg(jpg,w,h){
+  const enc=new TextEncoder(),partes=[],offs=[];let pos=0;
+  const add=x=>{const b=typeof x==='string'?enc.encode(x):x;partes.push(b);pos+=b.length};
+  const obj=(n,str)=>{offs[n]=pos;add(str)};
+  add('%PDF-1.4\n%\xE2\xE3\n');
+  obj(1,'1 0 obj <</Type/Catalog/Pages 2 0 R>> endobj\n');
+  obj(2,'2 0 obj <</Type/Pages/Kids[3 0 R]/Count 1>> endobj\n');
+  obj(3,'3 0 obj <</Type/Page/Parent 2 0 R/MediaBox[0 0 595.28 841.89]/Resources<</XObject<</Im0 4 0 R>>>>/Contents 5 0 R>> endobj\n');
+  obj(4,`4 0 obj <</Type/XObject/Subtype/Image/Width ${w}/Height ${h}/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${jpg.length}>> stream\n`);add(jpg);add('\nendstream endobj\n');
+  const cs='q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+  obj(5,`5 0 obj <</Length ${cs.length}>> stream\n${cs}\nendstream endobj\n`);
+  const xr=pos;let t='xref\n0 6\n0000000000 65535 f \n';for(let i=1;i<=5;i++)t+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+  add(t+`trailer <</Size 6/Root 1 0 R>>\nstartxref\n${xr}\n%%EOF`);
+  return new Blob(partes,{type:'application/pdf'});
+}
+let DL=null;try{if(window.claude&&window.claude.use)window.claude.use('downloads').then(d=>{DL=d}).catch(()=>{})}catch(e){}
+async function baixar(blob,nome){
+  if(DL){try{await DL.save({filename:nome,data:blob});toast('Arquivo salvo');}catch(e){if(e&&e.code==='declined')return;toast('Não foi possível baixar aqui. Tente "Copiar".')}return}
+  baixarDireto(blob,nome)}
+function baixarDireto(blob,nome){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+
+function tabela(p,sep,csv){
+  const q=v=>{v=String(v);return csv&&/[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const cab=['Nº','Nome',...p.disc.map(d=>d.nome+' ('+fmt(d.valor)+')'),'Acertos','Respostas'];
+  const L=[cab.map(q).join(sep)];
+  for(const r of p.res.slice().sort((a,b)=>a.num-b.num)){const c=corrigir(p,r.resp);
+    L.push([r.num,nomeAluno(p,r.num),...c.disc.map(x=>fmt(x.nota)),c.ac,r.resp.map(v=>v>=0?LET[v]:v===-2?'*':'-').join('')].map(q).join(sep))}
+  L.push(['Gabarito','',...p.disc.map(()=>''),'',p.gab.map(v=>v>=0?LET[v]:v===-3?'X':'-').join('')].map(q).join(sep));
+  return L.join('\r\n');
+}
+
+
+
+/* ============ desenhos (ícones) ============ */
+const IC={
+ impressora:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><rect x="13" y="5" width="22" height="12"/><rect x="5" y="17" width="38" height="18" rx="3"/><rect x="13" y="29" width="22" height="14" fill="#fff"/><line x1="17" y1="34" x2="31" y2="34"/><line x1="17" y1="38" x2="27" y2="38"/><circle cx="37" cy="23" r="1.5" fill="currentColor"/></svg>',
+ gabarito:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="4" width="32" height="40" rx="3"/><circle cx="16" cy="15" r="3.5" fill="currentColor"/><line x1="23" y1="15" x2="33" y2="15"/><circle cx="16" cy="25" r="3.5"/><line x1="23" y1="25" x2="33" y2="25"/><path d="M13 35l3 3 6-6"/><line x1="26" y1="35" x2="33" y2="35"/></svg>',
+ camera:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M5 15h9l3-5h14l3 5h9v24H5z"/><circle cx="24" cy="26" r="8"/></svg>',
+ notas:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="6" y1="42" x2="42" y2="42"/><rect x="9" y="26" width="7" height="16" fill="currentColor"/><rect x="21" y="16" width="7" height="26" fill="currentColor"/><rect x="33" y="8" width="7" height="34" fill="currentColor"/></svg>',
+ ajustes:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="8" y1="12" x2="40" y2="12"/><line x1="8" y1="24" x2="40" y2="24"/><line x1="8" y1="36" x2="40" y2="36"/><circle cx="17" cy="12" r="4" fill="#fff"/><circle cx="31" cy="24" r="4" fill="#fff"/><circle cx="20" cy="36" r="4" fill="#fff"/></svg>',
+ check:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 25l9 9 19-20"/></svg>',
+ baixar:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6v24M14 20l10 10 10-10M8 40h32"/></svg>',
+ mais:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M24 10v28M10 24h28"/></svg>',
+ celular:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3"><rect x="13" y="4" width="22" height="40" rx="4"/><line x1="21" y1="38" x2="27" y2="38" stroke-linecap="round"/></svg>',
+ alunos:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3"><circle cx="18" cy="16" r="6"/><path d="M6 40c0-8 5-13 12-13s12 5 12 13"/><circle cx="34" cy="18" r="5"/><path d="M32 28c6 0 10 4 10 11"/></svg>',
+ erro:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M14 14l20 20M34 14L14 34"/></svg>'
+};
+// desenhos maiores para o tutorial e telas de instrução
+const DES={
+ cartao:`<svg viewBox="0 0 160 160"><rect x="35" y="10" width="90" height="128" rx="3" fill="#fff" stroke="#1f4e8c" stroke-width="3"/><rect x="41" y="16" width="10" height="10" fill="#18202e"/><rect x="109" y="16" width="10" height="10" fill="#18202e"/><rect x="41" y="122" width="10" height="10" fill="#18202e"/><rect x="109" y="122" width="10" height="10" fill="#18202e"/><rect x="56" y="18" width="26" height="4" fill="#18202e"/>${[0,1,2,3,4,5].map(r=>[0,1,2,3].map(k=>`<circle cx="${60+k*12}" cy="${44+r*13}" r="4.2" fill="${(r*3+k)%5===1?'#1f4e8c':'#fff'}" stroke="#18202e" stroke-width="1.2"/>`).join('')).join('')}</svg>`,
+ pintar:`<svg viewBox="0 0 160 160"><circle cx="45" cy="70" r="20" fill="#fff" stroke="#18202e" stroke-width="3"/><circle cx="95" cy="70" r="20" fill="#1f4e8c" stroke="#18202e" stroke-width="3"/><text x="45" y="77" font-size="20" text-anchor="middle" fill="#999" font-family="Arial">A</text><g transform="rotate(35 120 100)"><rect x="112" y="40" width="14" height="80" rx="3" fill="#f2b632" stroke="#18202e" stroke-width="2"/><path d="M112 120l7 16 7-16z" fill="#18202e"/></g><path d="M62 118h50" stroke="#17824a" stroke-width="6" stroke-linecap="round"/></svg>`,
+ fotografar:`<svg viewBox="0 0 160 160"><rect x="40" y="70" width="80" height="62" rx="2" fill="#fff" stroke="#1f4e8c" stroke-width="3" transform="skewX(-8)"/><rect x="48" y="8" width="64" height="100" rx="10" fill="#18202e"/><rect x="53" y="16" width="54" height="80" rx="3" fill="#e6eef9"/><rect x="62" y="28" width="36" height="52" fill="#fff" stroke="#17824a" stroke-width="3"/><rect x="64" y="30" width="6" height="6" fill="#18202e"/><rect x="90" y="30" width="6" height="6" fill="#18202e"/><rect x="64" y="72" width="6" height="6" fill="#18202e"/><rect x="90" y="72" width="6" height="6" fill="#18202e"/></svg>`,
+ pronto:`<svg viewBox="0 0 160 160"><rect x="25" y="25" width="110" height="110" rx="10" fill="#fff" stroke="#1f4e8c" stroke-width="3"/><rect x="40" y="90" width="16" height="30" fill="#1f4e8c"/><rect x="72" y="65" width="16" height="55" fill="#1f4e8c"/><rect x="104" y="45" width="16" height="75" fill="#17824a"/><circle cx="120" cy="35" r="18" fill="#17824a"/><path d="M111 35l6 6 11-12" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+ compartilhar:'<svg viewBox="0 0 24 24" width="22" height="22" style="vertical-align:-5px" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11v9h12v-9"/></svg>',
+ tresPontos:'<svg viewBox="0 0 24 24" width="22" height="22" style="vertical-align:-5px" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>'
+};
+
+/* ============ janelas ============ */
+function janela(tit,html,botoes){return new Promise(res=>{
+  $('#mTit').textContent=tit||'';$('#mTit').style.display=tit?'':'none';$('#mTxt').innerHTML=html;
+  $('#mBot').innerHTML=botoes.map((b,i)=>`<button class="btn ${b.cls||''}" data-i="${i}">${b.t}</button>`).join('');
+  $('#modal').classList.add('on');
+  $('#mBot').querySelectorAll('button').forEach(bt=>bt.onclick=()=>{$('#modal').classList.remove('on');res(+bt.dataset.i)});
+})}
+async function pergunta(t,sim,perigo){const r=await janela('',esc(t),[{t:sim||'Sim, continuar',cls:perigo?'perigo':''},{t:'Não, voltar',cls:'sec'}]);return r===0}
+function aviso(tit,html){return janela(tit,html,[{t:'Entendi'}])}
+function carregando(on,t){$('#carregando').classList.toggle('on',on);if(t)$('#carTxt').textContent=t}
+
+/* ============ configurações gerais ============ */
+DB.cfg=DB.cfg||{};
+function aplicaLetra(){document.body.classList.toggle('grande',!!DB.cfg.letraGrande)}
+aplicaLetra();
+
+/* ============ navegação ============ */
+let pilha=[],atual=null;
+function ir(tela,arg){if(atual)pilha.push(atual);atual={tela,arg};render()}
+function trocar(tela,arg){atual={tela,arg};render()}
+function voltar(){atual=pilha.length?pilha.pop():{tela:'inicio'};render()}
+function irInicioProva(){pilha=[{tela:'inicio'}];atual={tela:'prova'};render()}
+$('#bVoltar').onclick=async()=>{if(atual&&(atual.tela==='revisao'||atual.tela==='revGab')&&!atual.arg.editId&&!await pergunta('Sair sem salvar esta correção?','Sair sem salvar'))return;
+  if(atual&&atual.tela==='assist'&&atual.arg.passo>0){atual.arg.passo--;render();return}
+  voltar()};
+$('#bAjuda').onclick=()=>{const a=AJUDA[atual.tela]||AJUDA.inicio;aviso('Ajuda',a)};
+window.addEventListener('popstate',()=>{});
+function render(){
+  window.scrollTo(0,0);
+  if(cam.stream&&!['revisao','revGab','salvo'].includes(atual.tela))fecharCamera();
+  $('#bVoltar').style.visibility=atual.tela==='inicio'?'hidden':'visible';
+  TELAS[atual.tela](atual.arg);
+}
+function titulo(t){$('#titulo').textContent=t}
+const TELAS={};
+
+const AJUDA={
+ inicio:'Aqui ficam as suas provas. Toque numa prova para continuar a correção, ou em <b>Criar nova prova</b> para começar outra.<br><br>Tudo fica guardado neste celular. Para levar para outro aparelho, use <b>Cópia de segurança</b>.',
+ assist:'Responda uma pergunta por vez e toque em <b>Próximo</b>. Dá para mudar tudo depois em <b>Mudar dados da prova</b>.',
+ prova:'Siga os passos em ordem. O passo que está com a borda azul e escrito <b>PRÓXIMO PASSO</b> é o que você deve fazer agora.',
+ config:'Mude o que precisar e toque em <b>Salvar</b> no final da tela.',
+ cartao:'Baixe o PDF e imprima uma folha para cada aluno, ou imprima uma e tire xerox. Os 4 quadrados pretos dos cantos precisam sair inteiros na folha.',
+ gabarito:'Para cada questão, toque na letra certa. A letra fica azul. Se errou, toque em outra letra. <b>Anular</b> dá a questão como certa para todos os alunos.',
+ revisao:'O app já leu o cartão. Confira as questões em amarelo, que são as que ficaram em dúvida. Para trocar uma resposta, toque na letra certa. Depois toque em <b>Está certo, salvar</b>.',
+ revGab:'O app leu as respostas certas do cartão. Confira e toque em <b>Usar este gabarito</b>.',
+ salvo:'O cartão foi guardado. Toque em <b>Corrigir o próximo cartão</b> para continuar.',
+ notas:'Aqui estão as notas de todos os alunos já corrigidos. Toque numa linha para ver ou consertar a correção daquele aluno. <b>Baixar planilha</b> cria um arquivo que abre no Excel ou no Google Planilhas.',
+ falha:'O app não achou os 4 quadrados pretos do cartão. Coloque o cartão numa mesa, em lugar claro, e fotografe de cima, mostrando a folha inteira.',
+ tutorial:'Passe as telas para aprender como o app funciona.',
+ instalar:'Siga os passos para colocar o app na tela inicial do celular, como um aplicativo.'
+};
+
+/* ============ instalação ============ */
+let promptInstalar=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptInstalar=e;if(atual&&atual.tela==='inicio')render()});
+function instalado(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true}
+function ehIphone(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+async function instalar(){
+  if(promptInstalar){promptInstalar.prompt();const r=await promptInstalar.userChoice.catch(()=>null);promptInstalar=null;if(r&&r.outcome==='accepted'){DB.cfg.instalou=true;salvar();toast('Pronto! O app está na tela do celular')}render();return}
+  if(ehIphone())aviso('Colocar na tela do iPhone',`<ol><li>Abra este site no <b>Safari</b>.</li><li>Toque no botão compartilhar ${DES.compartilhar} na parte de baixo da tela.</li><li>Desça a lista e toque em <b>Adicionar à Tela de Início</b>.</li><li>Toque em <b>Adicionar</b>, no canto de cima.</li></ol>Depois disso, abra o app pelo ícone <b>Corretor</b> na tela do celular.`);
+  else aviso('Colocar na tela do celular',`<ol><li>Abra este site no <b>Chrome</b>.</li><li>Toque nos três pontinhos ${DES.tresPontos} no canto de cima.</li><li>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</li><li>Confirme tocando em <b>Instalar</b> ou <b>Adicionar</b>.</li></ol>Depois disso, abra o app pelo ícone <b>Corretor</b> na tela do celular.`);
+}
+if('serviceWorker' in navigator&&location.protocol==='https:'&&window.self===window.top){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+
+/* ---- tutorial ---- */
+const TUTO=[
+ [DES.cartao,'1. Imprima o cartão-resposta','O app cria o cartão da sua prova. Imprima uma folha para cada aluno.'],
+ [DES.pintar,'2. O aluno pinta a bolinha','Cada aluno pinta a bolinha da resposta, com caneta preta ou azul, e marca o número de chamada.'],
+ [DES.fotografar,'3. Aponte o celular para o cartão','O app reconhece o cartão pelos 4 quadrados pretos e corrige sozinho.'],
+ [DES.pronto,'4. As notas ficam prontas','Veja a nota de cada aluno, por disciplina, e baixe a planilha.']
+];
+TELAS.tutorial=arg=>{
+  const i=arg&&arg.i||0,[d,t,x]=TUTO[i];titulo('Como funciona');
+  $('#tela').innerHTML=`<div class="progresso">${TUTO.map((_,k)=>`<i class="${k<=i?'on':''}"></i>`).join('')}</div>
+  <div class="card centro"><div class="ilus">${d}</div><h2 class="grande">${t}</h2><p>${x}</p></div>
+  <button class="btn" id="tProx">${i<TUTO.length-1?'Próximo &#8250;':'Começar a usar'}</button>${i<TUTO.length-1?'<button class="btn leve" id="tPula">Pular explicação</button>':''}`;
+  const fim=()=>{DB.cfg.viuTuto=true;salvar();atual={tela:'inicio'};pilha=[];render()};
+  $('#tProx').onclick=()=>{if(i<TUTO.length-1)trocar('tutorial',{i:i+1});else fim()};
+  if($('#tPula'))$('#tPula').onclick=fim;
+};
+
+/* ---- início ---- */
+TELAS.inicio=()=>{
+  titulo('Corretor de Cartões');pilha=[];
+  const ps=DB.provas.slice().sort((a,b)=>b.criada-a.criada);
+  let h='';
+  if(!instalado()&&!DB.cfg.instalou&&location.protocol==='https:'&&window.self===window.top)
+    h+=`<div class="card" style="border:2px solid var(--azul)"><div style="display:flex;gap:12px;align-items:center"><span style="color:var(--azul);flex:none;width:44px">${IC.celular}</span><div><b>Coloque o app na tela do celular</b><div class="muted">Assim ele abre com um toque, como um aplicativo, e funciona sem internet.</div></div></div>
+    <button class="btn" id="bInst">Colocar na tela do celular</button><button class="btn leve" id="bJaInst">Já coloquei</button></div>`;
+  if(!ps.length){
+    h+=`<div class="card centro"><div class="ilus">${DES.fotografar}</div><h2 class="grande">Corrija provas com a câmera do celular</h2><p class="muted">Você cria a prova, imprime os cartões e o app corrige sozinho.</p></div>
+    <button class="btn verde" id="bNova">${IC.mais} Criar minha primeira prova</button><button class="btn sec" id="bTuto">Ver como funciona</button>`;
+  }else{
+    h+=`<button class="btn verde" id="bNova">${IC.mais} Criar nova prova</button><h2 style="margin:18px 4px 10px;font-size:1em;color:var(--cinza)">Minhas provas</h2>`;
+    for(const p of ps)h+=`<button class="passo" data-id="${p.id}"><span class="ic">${IC.gabarito}</span><span><b>${esc(p.nome)}${p.turma?' · '+esc(p.turma):''}</b><small>${p.nQ} questões · ${p.res.length} ${p.res.length===1?'cartão corrigido':'cartões corrigidos'}</small></span></button>`;
+    h+=`<button class="btn leve" id="bTuto">Ver como funciona</button>`;
+  }
+  h+=`<details><summary>Tamanho da letra e cópia de segurança</summary><div class="dentro">
+    <label>Tamanho da letra</label><div class="chips"><button id="lN" class="${DB.cfg.letraGrande?'':'on'}">Normal</button><button id="lG" class="${DB.cfg.letraGrande?'on':''}" style="font-size:1.2em">Grande</button></div>
+    <label>Cópia de segurança</label><p class="muted" style="margin-top:0">As provas ficam guardadas só neste celular. Faça uma cópia para não perder ou para passar para outro celular.</p>
+    <button class="btn sec peq" id="bBkp">${IC.baixar} Baixar cópia</button><button class="btn sec peq" id="bRest">Restaurar uma cópia</button></div></details>`;
+  $('#tela').innerHTML=h;
+  if($('#bInst')){$('#bInst').onclick=instalar;$('#bJaInst').onclick=()=>{DB.cfg.instalou=true;salvar();render()}}
+  $('#bNova').onclick=()=>{const p=novaProva();p.nome='';ir('assist',{passo:0,p})};
+  $('#bTuto').onclick=()=>ir('tutorial',{i:0});
+  document.querySelectorAll('.passo[data-id]').forEach(b=>b.onclick=()=>{DB.ativa=b.dataset.id;salvar();ir('prova')});
+  $('#lN').onclick=()=>{DB.cfg.letraGrande=false;salvar();aplicaLetra();render()};
+  $('#lG').onclick=()=>{DB.cfg.letraGrande=true;salvar();aplicaLetra();render()};
+  $('#bBkp').onclick=()=>baixar(new Blob([JSON.stringify(DB)],{type:'application/json'}),'corretor-copia-'+new Date().toISOString().slice(0,10)+'.json');
+  $('#bRest').onclick=()=>$('#arqBackup').click();
+};
+$('#arqBackup').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.provas))throw 0;
+  if(!await pergunta('A cópia vai substituir as provas que estão neste celular. Continuar?','Sim, restaurar'))return;d.cfg=Object.assign({},DB.cfg,d.cfg||{});DB=d;salvar();toast('Cópia restaurada');atual={tela:'inicio'};render()}catch(x){aviso('Arquivo errado','Esse arquivo não é uma cópia do Corretor.')}};r.readAsText(f)};
+
+/* ---- editor de disciplinas (usado no assistente e nos ajustes) ---- */
+function discHTML(t,aberto){
+  let h=`<div class="chips" id="dQtd">${[1,2,3,4,5,6].map(k=>`<button data-k="${k}" class="${k===t.disc.length?'on':''}">${k}</button>`).join('')}</div><div style="height:14px"></div>`;
+  t.disc.forEach((d,i)=>{h+=`<div class="disc"><div class="mini">NOME DA ${t.disc.length>1?(i+1)+'ª ':''}DISCIPLINA</div><input data-i="${i}" data-k="nome" value="${esc(d.nome)}" maxlength="30" placeholder="Ex.: Matemática">
+    <div class="det" id="det${i}">Questões ${d.de} a ${d.ate} · vale ${fmt(d.valor)} pontos</div>
+    <div class="avanc" style="display:${aberto?'flex':'none'}"><div><div class="mini">DA QUESTÃO</div><input data-i="${i}" data-k="de" type="number" inputmode="numeric" value="${d.de}"></div><div><div class="mini">ATÉ A</div><input data-i="${i}" data-k="ate" type="number" inputmode="numeric" value="${d.ate}"></div><div><div class="mini">VALE</div><input data-i="${i}" data-k="valor" type="number" inputmode="decimal" step="0.5" value="${d.valor}"></div></div></div>`});
+  h+=`<button class="btn leve" id="dAv">${aberto?'Esconder questões e valores':'Mudar as questões ou o valor de cada disciplina'}</button><div id="dProb"></div>`;
+  return h;
+}
+function discLiga(t,box,aberto,redesenha){
+  box.innerHTML=discHTML(t,aberto);
+  box.querySelectorAll('#dQtd button').forEach(b=>b.onclick=()=>{const k=+b.dataset.k,nomes=t.disc.map(d=>d.nome),val=t.disc[0]?t.disc[0].valor:10;t.disc=dividir(t.nQ,k);t.disc.forEach((d,i)=>{d.valor=val;if(nomes[i]&&!/^Disciplina \d+$/.test(nomes[i]))d.nome=nomes[i]});discLiga(t,box,aberto,redesenha)});
+  box.querySelectorAll('.disc input').forEach(inp=>inp.oninput=()=>{const d=t.disc[+inp.dataset.i],k=inp.dataset.k;d[k]=k==='nome'?inp.value:(parseFloat(String(inp.value).replace(',','.'))||0);
+    box.querySelector('#det'+inp.dataset.i).textContent=`Questões ${d.de} a ${d.ate} · vale ${fmt(d.valor)} pontos`;mostraProb(t,box)});
+  box.querySelector('#dAv').onclick=()=>discLiga(t,box,!aberto,redesenha);
+  mostraProb(t,box);
+}
+function problemasDisc(t){const pr=[],cob=Array(t.nQ).fill(0);
+  t.disc.forEach(d=>{if(d.de<1||d.ate>t.nQ||d.de>d.ate)pr.push(`"${d.nome}" está com as questões erradas (${d.de} a ${d.ate}).`);else for(let q=d.de;q<=d.ate;q++)cob[q-1]++});
+  const sem=cob.map((c,i)=>c===0?i+1:0).filter(Boolean),dup=cob.map((c,i)=>c>1?i+1:0).filter(Boolean);
+  if(sem.length)pr.push('Estas questões não estão em nenhuma disciplina: '+resumo(sem)+'.');if(dup.length)pr.push('Estas questões estão em duas disciplinas: '+resumo(dup)+'.');return pr}
+function mostraProb(t,box){const pr=problemasDisc(t);box.querySelector('#dProb').innerHTML=pr.length?`<div class="aviso">${pr.map(esc).join('<br>')}</div>`:''}
+function stepperLiga(inp,min,max,onCh){const set=v=>{v=Math.max(min,Math.min(max,v||min));inp.value=v;onCh(v)};
+  inp.parentNode.querySelectorAll('button').forEach(b=>b.onclick=()=>set((parseInt(inp.value)||0)+(+b.dataset.d)));inp.onchange=()=>set(parseInt(inp.value))}
+function stepperHTML(id,v){return `<div class="stepper"><button data-d="-1" aria-label="Menos">−</button><input id="${id}" type="number" inputmode="numeric" value="${v}"><button data-d="1" aria-label="Mais">+</button></div>`}
+function escolhaLetras(n){return [4,5].map(k=>`<button class="escolha ${n===k?'on':''}" data-a="${k}"><b>${k===4?'A, B, C e D':'A, B, C, D e E'}</b><div class="bol">${LET.slice(0,k).split('').map(l=>`<span>${l}</span>`).join('')}</div></button>`).join('')}
+function ajustaNQ(t,v){t.nQ=v;
+  // reajusta disciplinas mantendo nomes e valores
+  const nomes=t.disc.map(d=>d.nome),vals=t.disc.map(d=>d.valor);t.disc=dividir(v,Math.min(t.disc.length||1,v));t.disc.forEach((d,i)=>{d.nome=nomes[i]||d.nome;d.valor=vals[i]??10})}
+
+/* ---- assistente de nova prova ---- */
+TELAS.assist=a=>{
+  const t=a.p,N=5,i=a.passo;titulo('Nova prova');
+  let h=`<div class="progresso">${Array.from({length:N},(_,k)=>`<i class="${k<=i?'on':''}"></i>`).join('')}</div><div class="muted">Pergunta ${i+1} de ${N}</div>`;
+  if(i===0)h+=`<h2 class="grande">Qual é o nome da prova?</h2><input id="aNome" value="${esc(t.nome)}" maxlength="48" placeholder="Ex.: Prova do 1º bimestre"><label>Turma <span class="muted">(se quiser)</span></label><input id="aTurma" value="${esc(t.turma)}" maxlength="20" placeholder="Ex.: 2º A">`;
+  if(i===1)h+=`<h2 class="grande">Quantas questões tem a prova?</h2>${stepperHTML('aNQ',t.nQ)}<div class="chips" id="aAtal">${[10,20,30,40,50].map(v=>`<button data-v="${v}" class="${v===t.nQ?'on':''}">${v}</button>`).join('')}</div>`;
+  if(i===2)h+=`<h2 class="grande">Quais letras cada questão tem?</h2>${escolhaLetras(t.nAlt)}`;
+  if(i===3)h+=`<h2 class="grande">Quantas disciplinas a prova tem?</h2><p class="muted" style="margin-top:-6px">Cada disciplina terá uma nota separada. Se for de uma matéria só, escolha 1.</p><div id="aDisc"></div>`;
+  if(i===4)h+=`<h2 class="grande">Quer colocar os nomes dos alunos?</h2><p class="muted" style="margin-top:-6px">Escreva um nome por linha, na ordem da chamada. Assim as notas aparecem com o nome do aluno. Pode deixar em branco e fazer depois.</p><textarea id="aAl" placeholder="Ana Souza&#10;Bruno Lima&#10;Carla Dias">${esc(t.alunos)}</textarea>`;
+  h+=`<button class="btn ${i===N-1?'verde':''}" id="aProx">${i===N-1?'Criar a prova':'Próximo &#8250;'}</button>`;
+  $('#tela').innerHTML=h;
+  if(i===0){$('#aNome').oninput=e=>t.nome=e.target.value;$('#aTurma').oninput=e=>t.turma=e.target.value}
+  if(i===1){const max=maxQuestoes(t.nAlt);stepperLiga($('#aNQ'),1,max,v=>{ajustaNQ(t,v);document.querySelectorAll('#aAtal button').forEach(b=>b.classList.toggle('on',+b.dataset.v===v))});
+    document.querySelectorAll('#aAtal button').forEach(b=>b.onclick=()=>{$('#aNQ').value=b.dataset.v;$('#aNQ').onchange()})}
+  if(i===2)document.querySelectorAll('.escolha').forEach(b=>b.onclick=()=>{t.nAlt=+b.dataset.a;if(t.nQ>maxQuestoes(t.nAlt))ajustaNQ(t,maxQuestoes(t.nAlt));render()});
+  if(i===3)discLiga(t,$('#aDisc'),false);
+  if(i===4)$('#aAl').oninput=e=>t.alunos=e.target.value;
+  $('#aProx').onclick=async()=>{
+    if(i===0&&!t.nome.trim()){$('#aNome').classList.add('falta');$('#aNome').focus();toast('Escreva o nome da prova');return}
+    if(i===3){const pr=problemasDisc(t);if(pr.length){aviso('Confira as disciplinas',pr.map(esc).join('<br><br>'));return}}
+    if(i<N-1){a.passo++;render();return}
+    t.nome=t.nome.trim();t.turma=t.turma.trim();t.disc.forEach((d,k)=>{if(!d.nome.trim())d.nome='Disciplina '+(k+1)});t.gab=Array(t.nQ).fill(-1);
+    DB.provas.push(t);DB.ativa=t.id;salvar();toast('Prova criada');irInicioProva();
   };
-}
-
-/* Carrega o arquivo de imagem já corrigido de orientação e limitado em tamanho */
-function carregarImagem(file){
-  return new Promise(function(res, rej){
-    var pronto = function(fonte, w, h){
-      var max = 1700;
-      var esc = Math.min(1, max/Math.max(w,h));
-      var cv = document.createElement("canvas");
-      cv.width = Math.round(w*esc); cv.height = Math.round(h*esc);
-      var cx = cv.getContext("2d", {willReadFrequently:true});
-      cx.drawImage(fonte, 0, 0, cv.width, cv.height);
-      res({ canvas:cv, ctx:cx, w:cv.width, h:cv.height, dados:cx.getImageData(0,0,cv.width,cv.height) });
-    };
-    if (window.createImageBitmap){
-      createImageBitmap(file, {imageOrientation:"from-image"}).then(function(bmp){
-        pronto(bmp, bmp.width, bmp.height);
-      }).catch(function(){ viaImg(); });
-    } else viaImg();
-
-    function viaImg(){
-      var url = URL.createObjectURL(file);
-      var im = new Image();
-      im.onload = function(){ pronto(im, im.naturalWidth, im.naturalHeight); URL.revokeObjectURL(url); };
-      im.onerror = function(){ URL.revokeObjectURL(url); rej(new Error("imagem")); };
-      im.src = url;
-    }
-  });
-}
-
-/* Endireita a foto para um retângulo, usado na calibração e no mapa de conferência */
-function endireitar(src, fn, RW, RH){
-  var out = document.createElement("canvas");
-  out.width = RW; out.height = RH;
-  var octx = out.getContext("2d");
-  var img = octx.createImageData(RW, RH);
-  var od = img.data, sd = src.dados.data, sw = src.w, sh = src.h;
-  for (var y=0;y<RH;y++){
-    var v = (y+0.5)/RH;
-    for (var x=0;x<RW;x++){
-      var u = (x+0.5)/RW;
-      var p = fn(u,v);
-      var sx = p.x|0, sy = p.y|0;
-      var o = (y*RW + x)*4;
-      if (sx>=0 && sy>=0 && sx<sw && sy<sh){
-        var i = (sy*sw + sx)*4;
-        od[o]=sd[i]; od[o+1]=sd[i+1]; od[o+2]=sd[i+2]; od[o+3]=255;
-      } else { od[o]=32; od[o+1]=39; od[o+2]=45; od[o+3]=255; }
-    }
-  }
-  octx.putImageData(img,0,0);
-  return out;
-}
-function proporcao(p){
-  function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
-  var larg = (dist(p[0],p[1]) + dist(p[3],p[2]))/2;
-  var alt  = (dist(p[0],p[3]) + dist(p[1],p[2]))/2;
-  var RW = 1100;
-  var RH = Math.max(200, Math.round(RW * alt / Math.max(1,larg)));
-  return {RW:RW, RH:RH};
-}
-
-/* ---------------------------------------------------------------
-   Seletor de pontos sobre a foto, com lupa
---------------------------------------------------------------- */
-function Seletor(canvas, lupa){
-  this.cv = canvas;
-  this.ctx = canvas.getContext("2d");
-  this.lupa = lupa;
-  this.lctx = lupa.getContext("2d");
-  this.pts = [];
-  this.max = 4;
-  this.fecharPoligono = true;
-  this.aoMudar = null;
-  this.src = null;
-  var self = this;
-
-  canvas.addEventListener("pointerdown", function(ev){ self._down(ev); });
-  canvas.addEventListener("pointermove", function(ev){ self._move(ev); });
-  canvas.addEventListener("pointerup", function(ev){ self._up(ev); });
-  canvas.addEventListener("pointercancel", function(ev){ self._up(ev); });
-  window.addEventListener("resize", function(){ if (self.src){ self.medir(); self.desenhar(); } });
-}
-Seletor.prototype.definirFonte = function(src, w, h){
-  this.src = src; this.iw = w; this.ih = h; this.pts = [];
-  this.medir(); this.desenhar();
-};
-Seletor.prototype.medir = function(){
-  var larg = this.cv.parentElement.clientWidth || 320;
-  this.escala = larg / this.iw;
-  var alt = this.ih * this.escala;
-  var dpr = Math.min(2, window.devicePixelRatio || 1);
-  this.cv.width = Math.round(larg*dpr);
-  this.cv.height = Math.round(alt*dpr);
-  this.cv.style.width = larg+"px";
-  this.cv.style.height = alt+"px";
-  this.ctx.setTransform(dpr*this.escala, 0, 0, dpr*this.escala, 0, 0);
-};
-Seletor.prototype.desenhar = function(){
-  if (!this.src) return;
-  var c = this.ctx, k = 1/this.escala;
-  c.clearRect(0,0,this.iw,this.ih);
-  c.drawImage(this.src, 0, 0, this.iw, this.ih);
-  if (this.pts.length > 1){
-    c.beginPath();
-    c.moveTo(this.pts[0].x, this.pts[0].y);
-    for (var i=1;i<this.pts.length;i++) c.lineTo(this.pts[i].x, this.pts[i].y);
-    if (this.fecharPoligono && this.pts.length === this.max) c.closePath();
-    c.strokeStyle = "#15C7C0"; c.lineWidth = 2*k; c.stroke();
-  }
-  for (var j=0;j<this.pts.length;j++){
-    var p = this.pts[j];
-    c.beginPath(); c.arc(p.x, p.y, 9*k, 0, Math.PI*2);
-    c.fillStyle = "rgba(15,95,102,.85)"; c.fill();
-    c.strokeStyle = "#fff"; c.lineWidth = 2*k; c.stroke();
-    c.beginPath(); c.moveTo(p.x-14*k,p.y); c.lineTo(p.x+14*k,p.y);
-    c.moveTo(p.x,p.y-14*k); c.lineTo(p.x,p.y+14*k);
-    c.strokeStyle = "rgba(255,255,255,.9)"; c.lineWidth = 1.4*k; c.stroke();
-  }
-  if (this.aposDesenhar) this.aposDesenhar(c, k);
-};
-Seletor.prototype._pos = function(ev){
-  var r = this.cv.getBoundingClientRect();
-  return { x:(ev.clientX - r.left)/this.escala, y:(ev.clientY - r.top)/this.escala };
-};
-Seletor.prototype._down = function(ev){
-  if (!this.src) return;
-  ev.preventDefault();
-  var p = this._pos(ev), lim = 26/this.escala, achou = -1;
-  for (var i=0;i<this.pts.length;i++){
-    if (Math.hypot(this.pts[i].x-p.x, this.pts[i].y-p.y) < lim){ achou = i; break; }
-  }
-  if (achou < 0){
-    if (this.pts.length >= this.max) return;
-    this.pts.push({x:p.x, y:p.y});
-    achou = this.pts.length-1;
-  }
-  this.arrastando = achou;
-  this.pts[achou] = {x:p.x, y:p.y};
-  try{ this.cv.setPointerCapture(ev.pointerId); }catch(e){}
-  this._lupa(p, ev);
-  this.desenhar();
-  if (this.aoMudar) this.aoMudar();
-};
-Seletor.prototype._move = function(ev){
-  if (this.arrastando === undefined || this.arrastando === null || this.arrastando < 0) return;
-  ev.preventDefault();
-  var p = this._pos(ev);
-  p.x = Math.max(0, Math.min(this.iw, p.x));
-  p.y = Math.max(0, Math.min(this.ih, p.y));
-  this.pts[this.arrastando] = p;
-  this._lupa(p, ev);
-  this.desenhar();
-};
-Seletor.prototype._up = function(){
-  this.arrastando = -1;
-  this.lupa.classList.remove("ativa");
-  if (this.aoMudar) this.aoMudar();
-};
-Seletor.prototype._lupa = function(p, ev){
-  var z = 3.2, s = 112;
-  var lado = s/z;
-  this.lctx.setTransform(1,0,0,1,0,0);
-  this.lctx.fillStyle = "#fff";
-  this.lctx.fillRect(0,0,s,s);
-  this.lctx.drawImage(this.src, p.x-lado/2, p.y-lado/2, lado, lado, 0, 0, s, s);
-  this.lctx.strokeStyle = "rgba(15,95,102,.9)"; this.lctx.lineWidth = 1;
-  this.lctx.beginPath();
-  this.lctx.moveTo(0,s/2); this.lctx.lineTo(s,s/2);
-  this.lctx.moveTo(s/2,0); this.lctx.lineTo(s/2,s);
-  this.lctx.stroke();
-  this.lctx.strokeStyle = "rgba(15,95,102,.5)";
-  this.lctx.strokeRect(s/2-11, s/2-11, 22, 22);
-  var r = this.cv.getBoundingClientRect();
-  var noLadoEsquerdo = (ev.clientX - r.left) > r.width*0.55;
-  this.lupa.classList.toggle("esquerda", noLadoEsquerdo);
-  this.lupa.classList.add("ativa");
-};
-Seletor.prototype.desfazer = function(){
-  this.pts.pop(); this.desenhar();
-  if (this.aoMudar) this.aoMudar();
 };
 
-/* ---------------------------------------------------------------
-   Aba Prova: disciplinas e gabarito
---------------------------------------------------------------- */
-function montarDisciplinas(){
-  var box = $("#campos-disciplinas");
-  box.innerHTML = "";
-  for (var d=0; d<4; d++){
-    (function(d){
-      var wrap = el("div","disc-campo");
-      var pt = el("span","pt"); pt.style.background = CORES_DISC[d];
-      var inp = document.createElement("input");
-      inp.type = "text"; inp.value = estado.disciplinas[d];
-      inp.setAttribute("aria-label","Nome da disciplina "+(d+1));
-      inp.addEventListener("input", function(){
-        estado.disciplinas[d] = inp.value || ("Disciplina "+(d+1));
-        montarGabarito(); atualizarNotasTabela(); guardar();
-      });
-      wrap.appendChild(pt); wrap.appendChild(inp);
-      box.appendChild(wrap);
-    })(d);
-  }
-}
+/* ---- prova (passos) ---- */
+function proximoPasso(p){const gabOk=p.gab.length===p.nQ&&p.gab.every(v=>v!==-1);if(!p.impresso)return 1;if(!gabOk)return 2;return 3}
+TELAS.prova=()=>{
+  const p=prova();if(!p){atual={tela:'inicio'};return render()}
+  titulo(p.nome);
+  const gabN=p.gab.filter(v=>v!==-1).length,gabOk=gabN===p.nQ,nx=proximoPasso(p);
+  const passo=(n,ic,tit,sub,feito)=>`<button class="passo ${n===nx?'prox':''} ${feito?'feito':''}" id="s${n}"><span class="ic">${ic}</span><span><b>${tit}</b><small>${sub}</small></span>${n===nx?'<span class="selo">PRÓXIMO PASSO</span>':feito?'<span class="ok-ic">✓</span>':''}</button>`;
+  $('#tela').innerHTML=`<div class="muted" style="margin:0 4px 12px">${p.turma?esc(p.turma)+' · ':''}${p.nQ} questões · ${p.disc.length===1?'1 disciplina':p.disc.length+' disciplinas'}</div>
+  ${passo(1,IC.impressora,'1. Imprimir os cartões',p.impresso?'Cartão já baixado':'Baixe e imprima o cartão-resposta',p.impresso)}
+  ${passo(2,IC.gabarito,'2. Marcar o gabarito',gabOk?'Gabarito completo':gabN?`Faltam ${p.nQ-gabN} questões`:'Diga a resposta certa de cada questão',gabOk)}
+  ${passo(3,IC.camera,'3. Corrigir os cartões',p.res.length?`${p.res.length} já corrigidos. Toque para continuar`:'Fotografe o cartão de cada aluno',false)}
+  ${passo(4,IC.notas,'4. Ver as notas',p.res.length?`Notas de ${p.res.length} ${p.res.length===1?'aluno':'alunos'}`:'Aparecem depois de corrigir',p.res.length>0)}
+  <button class="btn sec" id="sCfg" style="margin-top:22px">${IC.ajustes} Mudar dados da prova</button>`;
+  $('#s1').onclick=()=>ir('cartao');$('#s2').onclick=()=>ir('gabarito');
+  $('#s3').onclick=async()=>{if(!gabOk){const r=await janela('Falta o gabarito',`Ainda faltam <b>${p.nQ-gabN}</b> questões no gabarito. Sem o gabarito o app não sabe o que está certo.`,[{t:'Marcar o gabarito agora'},{t:'Corrigir mesmo assim',cls:'sec'}]);if(r===0){ir('gabarito');return}}
+    corrigirCartao('corrigir')};
+  $('#s4').onclick=()=>ir('notas');$('#sCfg').onclick=()=>ir('config');
+};
 
-function montarGabarito(){
-  ajustarTamanhos();
-  var box = $("#grade-gabarito");
-  box.innerHTML = "";
-  var n = nq();
-  for (var q=0; q<n; q++){
-    (function(q){
-      var linha = el("div","q");
-      linha.appendChild(el("span","n", String(q+1)));
-      var pt = el("span","pt");
-      pt.style.background = CORES_DISC[estado.discQ[q]];
-      pt.title = estado.disciplinas[estado.discQ[q]];
-      linha.appendChild(pt);
-
-      if (avancado){
-        var sel = document.createElement("select");
-        sel.style.maxWidth = "48%";
-        for (var d=0; d<4; d++){
-          var op = document.createElement("option");
-          op.value = String(d); op.textContent = estado.disciplinas[d];
-          if (estado.discQ[q]===d) op.selected = true;
-          sel.appendChild(op);
-        }
-        sel.addEventListener("change", function(){
-          estado.discQ[q] = parseInt(sel.value,10);
-          pt.style.background = CORES_DISC[estado.discQ[q]];
-          checarDisciplinas(); guardar();
-        });
-        linha.appendChild(sel);
-      }
-
-      var alts = el("div","alts");
-      for (var i=0;i<5;i++){
-        (function(i){
-          var b = el("button", null, LETRAS[i]);
-          b.type = "button";
-          if (estado.gabarito[q] === i) b.className = "sel";
-          b.addEventListener("click", function(){
-            estado.gabarito[q] = (estado.gabarito[q] === i) ? null : i;
-            montarGabarito(); guardar();
-          });
-          alts.appendChild(b);
-        })(i);
-      }
-      var bn = el("button", "nula", "anul");
-      bn.type = "button";
-      bn.title = "Questão anulada";
-      if (estado.gabarito[q] === "N") bn.className = "nula sel";
-      bn.addEventListener("click", function(){
-        estado.gabarito[q] = (estado.gabarito[q] === "N") ? null : "N";
-        montarGabarito(); guardar();
-      });
-      alts.appendChild(bn);
-
-      linha.appendChild(alts);
-      box.appendChild(linha);
-    })(q);
-  }
-  var preenchidas = estado.gabarito.filter(function(g){ return g !== null && g !== undefined; }).length;
-  var pill = $("#pill-gab");
-  pill.textContent = preenchidas + " de " + n;
-  pill.className = "pill" + (preenchidas === n ? "" : " pendente");
-  checarDisciplinas();
-  atualizarPendencias();
-}
-
-function checarDisciplinas(){
-  var cx = $("#alerta-disc");
-  cx.innerHTML = "";
-  var cont = [0,0,0,0];
-  for (var q=0;q<estado.discQ.length;q++) cont[estado.discQ[q]]++;
-  var partes = [];
-  for (var d=0; d<4; d++) partes.push(estado.disciplinas[d] + ": " + cont[d]);
-  var desigual = cont.some(function(c){ return c !== cont[0]; });
-  if (desigual){
-    var a = el("div","aviso","Questões por disciplina — " + partes.join(", ") + ". A nota de cada uma é calculada sobre o próprio total, então isso não impede a correção.");
-    cx.appendChild(a);
-  }
-}
-
-/* ---------------------------------------------------------------
-   Aba Cartão: blocos e calibração
---------------------------------------------------------------- */
-function montarBlocos(){
-  var box = $("#lista-blocos");
-  box.innerHTML = "";
-  estado.blocos.forEach(function(b, idx){
-    var linha = el("div","bloco");
-    linha.appendChild(el("span","rot","Bloco "+(idx+1)));
-    var i0 = document.createElement("input");
-    i0.type = "number"; i0.min = "1"; i0.value = b[0];
-    i0.setAttribute("aria-label","Primeira questão do bloco "+(idx+1));
-    var sep = el("span",null,"a");
-    var i1 = document.createElement("input");
-    i1.type = "number"; i1.min = "1"; i1.value = b[1];
-    i1.setAttribute("aria-label","Última questão do bloco "+(idx+1));
-    function troca(){
-      var a = parseInt(i0.value,10) || 1;
-      var z = parseInt(i1.value,10) || a;
-      estado.blocos[idx] = [a, Math.max(a,z)];
-      estado.calib = null;
-      montarBlocos(); montarGabarito(); atualizarCalibPill(); guardar();
-    }
-    i0.addEventListener("change", troca);
-    i1.addEventListener("change", troca);
-    var rm = el("button", null, "×");
-    rm.type = "button";
-    rm.setAttribute("aria-label","Remover bloco "+(idx+1));
-    rm.addEventListener("click", function(){
-      if (estado.blocos.length <= 1) return;
-      estado.blocos.splice(idx,1);
-      estado.calib = null;
-      montarBlocos(); montarGabarito(); atualizarCalibPill(); guardar();
-    });
-    linha.appendChild(i0); linha.appendChild(sep); linha.appendChild(i1); linha.appendChild(rm);
-    box.appendChild(linha);
-  });
-  checarBlocos();
-}
-function checarBlocos(){
-  var cx = $("#alerta-blocos");
-  cx.innerHTML = "";
-  var vistas = {}, dupes = false, total = 0;
-  estado.blocos.forEach(function(b){
-    for (var q=b[0]; q<=b[1]; q++){
-      if (vistas[q]) dupes = true;
-      vistas[q] = true; total++;
-    }
-  });
-  var n = nq(), faltando = [];
-  for (var q=1; q<=n; q++) if (!vistas[q]) faltando.push(q);
-  if (dupes) cx.appendChild(el("div","aviso erro","Há questões repetidas em mais de um bloco. Ajuste as faixas antes de calibrar."));
-  else if (faltando.length) cx.appendChild(el("div","aviso","Sem bloco definido para as questões " + faltando.join(", ") + "."));
-  else cx.appendChild(el("div","aviso ok", total + " questões cobertas por " + estado.blocos.length + " blocos."));
-}
-function atualizarCalibPill(){
-  var pill = $("#pill-calib");
-  if (estado.calib && estado.calib.ref && estado.calib.celulas && estado.calib.celulas.length === nq()){
-    pill.textContent = "calibrado";
-    pill.className = "pill";
-  } else {
-    pill.textContent = "sem calibração";
-    pill.className = "pill pendente";
-  }
-  atualizarPendencias();
-}
-
-var cal = { src:null, quad:null, reto:null, blocoIdx:0, pontos:[], fase:"cantos" };
-var selCal = null, selCor = null;
-
-function iniciarCalibracao(arquivo){
-  carregarImagem(arquivo).then(function(src){
-    cal.src = src; cal.quad = null; cal.reto = null;
-    cal.blocoIdx = 0; cal.pontos = []; cal.fase = "cantos";
-    $("#cal-passo-foto").classList.add("oculto");
-    $("#cal-passo-canvas").classList.remove("oculto");
-    if (!selCal){
-      selCal = new Seletor($("#cal-canvas"), $("#cal-lupa"));
-      selCal.aoMudar = atualizarCalPasso;
-    }
-    selCal.max = 4; selCal.fecharPoligono = true;
-    selCal.definirFonte(src.canvas, src.w, src.h);
-    atualizarCalPasso();
-  }).catch(function(){
-    alert("Não consegui abrir essa imagem. Tente outra foto.");
-  });
-}
-
-function atualizarCalPasso(){
-  var inst = $("#cal-instrucao"), idx = $("#cal-idx"), av = $("#cal-avancar");
-  if (cal.fase === "cantos"){
-    idx.textContent = "1";
-    var faltam = 4 - selCal.pts.length;
-    var nomes = ["superior esquerdo","superior direito","inferior direito","inferior esquerdo"];
-    inst.textContent = faltam > 0
-      ? "Toque no canto " + nomes[selCal.pts.length] + " da área impressa das respostas. Estes quatro toques servem só para endireitar a foto, não precisam de precisão."
-      : "Quatro cantos marcados. A foto vai ser endireitada com base neles.";
-    av.textContent = "Continuar";
-    av.disabled = faltam > 0;
-  } else if (cal.fase === "blocos"){
-    var b = estado.blocos[cal.blocoIdx];
-    idx.textContent = (cal.blocoIdx+1) + "/" + estado.blocos.length;
-    var n = selCal.pts.length;
-    inst.textContent = n === 0
-      ? "Bloco " + (cal.blocoIdx+1) + ", questões " + b[0] + " a " + b[1] + ". Toque no centro do quadradinho A da questão " + b[0] + "."
-      : (n === 1
-        ? "Agora toque no centro do quadradinho E da questão " + b[1] + "."
-        : "Bloco " + (cal.blocoIdx+1) + " marcado. Confira os dois pontos e continue.");
-    av.textContent = (cal.blocoIdx === estado.blocos.length-1) ? "Concluir" : "Próximo bloco";
-    av.disabled = n < 2;
-  } else {
-    idx.textContent = "ok";
-    inst.textContent = "Confira se os marcadores caíram sobre as casinhas. Se algum estiver fora, recomece a calibração.";
-    av.textContent = "Salvar calibração";
-    av.disabled = false;
-  }
-}
-
-function avancarCalibracao(){
-  if (cal.fase === "cantos"){
-    cal.quad = selCal.pts.slice();
-    var H = homografia(cal.quad);
-    var fn = function(u,v){ return mapear(H,u,v); };
-    var p = proporcao(cal.quad);
-    cal.reto = endireitar(cal.src, fn, p.RW, p.RH);
-    cal.fase = "blocos"; cal.blocoIdx = 0; cal.pontos = [];
-    selCal.max = 2; selCal.fecharPoligono = false;
-    selCal.aposDesenhar = null;
-    selCal.definirFonte(cal.reto, cal.reto.width, cal.reto.height);
-    atualizarCalPasso();
-    return;
-  }
-  if (cal.fase === "blocos"){
-    var pts = selCal.pts.slice(0,2);
-    cal.pontos[cal.blocoIdx] = [
-      { u: pts[0].x/cal.reto.width, v: pts[0].y/cal.reto.height },
-      { u: pts[1].x/cal.reto.width, v: pts[1].y/cal.reto.height }
-    ];
-    if (cal.blocoIdx < estado.blocos.length-1){
-      cal.blocoIdx++;
-      selCal.definirFonte(cal.reto, cal.reto.width, cal.reto.height);
-      atualizarCalPasso();
-    } else {
-      var celulas = montarCelulas(cal.pontos);
-      estado.calib = {
-        blocos: estado.blocos.map(function(b){return b.slice();}),
-        celulas: celulas,
-        ref: escolherReferencias(celulas)
-      };
-      cal.fase = "revisao";
-      selCal.max = 0;
-      selCal.aposDesenhar = function(c, k){
-        desenharCelulas(c, k, cal.reto.width, cal.reto.height, function(u,v){
-          return { x:u*cal.reto.width, y:v*cal.reto.height };
-        });
-      };
-      selCal.definirFonte(cal.reto, cal.reto.width, cal.reto.height);
-      atualizarCalPasso();
-    }
-    return;
-  }
-  // revisão
-  atualizarCalibPill();
-  guardar();
-  $("#cal-passo-canvas").classList.add("oculto");
-  $("#cal-passo-foto").classList.remove("oculto");
-  var ok = el("div","aviso ok","Calibração salva. Na aba Corrigir, cada prova vai pedir estas quatro casinhas: " + textoReferencias() + ".");
-  $("#cal-passo-foto").prepend(ok);
-  setTimeout(function(){ ok.remove(); }, 12000);
-}
-
-/* Quatro casinhas bem afastadas entre si, usadas como âncora em cada foto */
-function escolherReferencias(celulas){
-  var umin=1, umax=0, vmin=1, vmax=0;
-  celulas.forEach(function(cels){
-    if (!cels) return;
-    cels.forEach(function(c){
-      umin=Math.min(umin,c.u); umax=Math.max(umax,c.u);
-      vmin=Math.min(vmin,c.v); vmax=Math.max(vmax,c.v);
-    });
-  });
-  var alvos = [[umin,vmin],[umax,vmin],[umax,vmax],[umin,vmax]];
-  return alvos.map(function(a){
-    var melhor = null, dist = Infinity;
-    celulas.forEach(function(cels, q){
-      if (!cels) return;
-      cels.forEach(function(c, i){
-        var d = (c.u-a[0])*(c.u-a[0]) + (c.v-a[1])*(c.v-a[1]);
-        if (d < dist){ dist = d; melhor = { q:q, c:i, u:c.u, v:c.v }; }
-      });
-    });
-    return melhor;
-  });
-}
-function nomeReferencia(r){
-  return "quadradinho " + LETRAS[r.c] + " da questão " + (r.q+1);
-}
-function textoReferencias(){
-  if (!estado.calib || !estado.calib.ref) return "";
-  return estado.calib.ref.map(nomeReferencia).join(", ");
-}
-/* desenha os 200 marcadores usando uma função de posição */
-function desenharCelulas(c, k, W, H, fn){
-  if (!estado.calib) return;
-  c.lineWidth = 1.8*k;
-  estado.calib.celulas.forEach(function(cels, q){
-    if (!cels) return;
-    var raio = raioCelula(q, W, H);
-    cels.forEach(function(cel){
-      var p = fn(cel.u, cel.v);
-      c.beginPath();
-      c.arc(p.x, p.y, raio, 0, Math.PI*2);
-      c.strokeStyle = "rgba(21,199,192,.95)";
-      c.stroke();
-    });
-  });
-}
-
-function montarCelulas(pontos){
-  var n = nq();
-  var celulas = new Array(n);
-  estado.blocos.forEach(function(b, idx){
-    var par = pontos[idx];
-    if (!par) return;
-    var linhas = b[1]-b[0]+1;
-    for (var r=0; r<linhas; r++){
-      var q = b[0]-1+r;
-      var fr = linhas>1 ? r/(linhas-1) : 0;
-      var arr = [];
-      for (var c=0;c<5;c++){
-        var fc = c/4;
-        arr.push({
-          u: par[0].u + (par[1].u - par[0].u)*fc,
-          v: par[0].v + (par[1].v - par[0].v)*fr
-        });
-      }
-      celulas[q] = arr;
-    }
-  });
-  return celulas;
-}
-
-/* espaçamento entre casinhas vizinhas, sempre dentro do mesmo bloco */
-function blocoDaQuestao(q){
-  for (var i=0;i<estado.blocos.length;i++){
-    if (q+1 >= estado.blocos[i][0] && q+1 <= estado.blocos[i][1]) return i;
-  }
-  return -1;
-}
-function passosDaQuestao(q){
-  var cels = estado.calib.celulas[q];
-  var du = Math.abs(cels[1].u - cels[0].u);
-  var dv = du;
-  var bi = blocoDaQuestao(q);
-  if (bi >= 0){
-    var b = estado.blocos[bi];
-    if (b[1] > b[0]){
-      var viz = (q+1 < b[1]) ? q+1 : q-1;
-      var outro = estado.calib.celulas[viz];
-      if (outro){
-        var d = Math.abs(outro[0].v - cels[0].v);
-        if (d > 1e-5) dv = d;
-      }
-    }
-  }
-  return { du:du, dv:dv };
-}
-/* raio de amostragem em unidades do retângulo endireitado */
-function raioCelula(q, W, H){
-  var p = passosDaQuestao(q);
-  return Math.max(3, 0.30 * Math.min(p.du * W, p.dv * H));
-}
-
-/* ---------------------------------------------------------------
-   Aba Corrigir
---------------------------------------------------------------- */
-var cor = { src:null, quad:null, H:null, valores:null, respostas:null, duvidas:null, reto:null };
-
-function atualizarPendencias(){
-  var box = $("#cor-pendencias");
-  if (!box) return;
-  box.innerHTML = "";
-  var faltas = [];
-  var n = nq();
-  var vazias = 0;
-  for (var q=0;q<n;q++) if (estado.gabarito[q] === null || estado.gabarito[q] === undefined) vazias++;
-  if (vazias) faltas.push("O gabarito ainda tem " + vazias + " questão" + (vazias>1?"s":"") + " sem resposta na aba Prova.");
-  if (!estado.calib || !estado.calib.ref || !estado.calib.celulas || estado.calib.celulas.length !== n) faltas.push("O cartão ainda não foi calibrado na aba Cartão.");
-  if (faltas.length){
-    faltas.forEach(function(f){ box.appendChild(el("div","aviso",f)); });
-    $("#cor-bloqueio").classList.remove("oculto");
-  } else {
-    $("#cor-bloqueio").classList.add("oculto");
-  }
-  $("#bt-foto-prova").disabled = !(estado.calib && estado.calib.ref);
-  var ref = $("#cor-referencias");
-  if (ref) ref.textContent = (estado.calib && estado.calib.ref)
-    ? "Cada prova pede quatro toques: " + textoReferencias() + "."
-    : "";
-}
-
-function iniciarCorrecao(arquivo){
-  carregarImagem(arquivo).then(function(src){
-    cor.src = src; cor.quad = null; cor.valores = null;
-    $("#cor-passo-foto").classList.add("oculto");
-    $("#cor-passo-conferencia").classList.add("oculto");
-    $("#cor-passo-cantos").classList.remove("oculto");
-    $("#cor-referencias").textContent = "";
-    if (!selCor){
-      selCor = new Seletor($("#cor-canvas"), $("#cor-lupa"));
-      selCor.aoMudar = function(){
-        var ref = estado.calib.ref;
-        var faltam = 4 - selCor.pts.length;
-        $("#cor-instrucao").textContent = faltam > 0
-          ? "Toque no centro do " + nomeReferencia(ref[selCor.pts.length]) + ". Use a lupa e arraste para acertar o centro."
-          : "Confira se os círculos caíram sobre as casinhas. Se algum estiver deslocado, arraste os quatro pontos até encaixar.";
-        $("#cor-ler").disabled = faltam > 0;
-        selCor.desenhar();
-      };
-      selCor.aposDesenhar = function(c, k){
-        if (selCor.pts.length < 4) return;
-        var fn = fazerMapa(selCor.pts.slice(), estado.calib.ref);
-        desenharCelulas(c, k, cor.src.w, cor.src.h, fn);
-      };
-    }
-    selCor.max = 4; selCor.fecharPoligono = true;
-    selCor.definirFonte(src.canvas, src.w, src.h);
-    selCor.aoMudar();
-  }).catch(function(){
-    alert("Não consegui abrir essa imagem. Tente outra foto.");
-  });
-}
-
-function amostrar(){
-  var fn = fazerMapa(selCor.pts.slice(), estado.calib.ref);
-  cor.quad = selCor.pts.slice();
-  cor.fn = fn;
-  var n = nq();
-  var dados = cor.src.dados.data, sw = cor.src.w, sh = cor.src.h;
-  var vals = new Array(n);
-
-  for (var q=0; q<n; q++){
-    var cels = estado.calib.celulas[q];
-    if (!cels){ vals[q] = [0,0,0,0,0]; continue; }
-    var linha = new Array(5);
-    var passos = passosDaQuestao(q);
-    var passoU = passos.du, passoV = passos.dv;
-    for (var c=0; c<5; c++){
-      var p  = fn(cels[c].u, cels[c].v);
-      var px = fn(cels[c].u + passoU*0.5, cels[c].v);
-      var py = fn(cels[c].u, cels[c].v + passoV*0.5);
-      var rx = Math.hypot(px.x-p.x, px.y-p.y);
-      var ry = Math.hypot(py.x-p.x, py.y-p.y);
-      var r = Math.max(2, 0.6*Math.min(rx, ry));
-      var passo = Math.max(1, Math.round(r/5));
-      var soma = 0, cont = 0;
-      for (var dy2=-r; dy2<=r; dy2+=passo){
-        for (var dx2=-r; dx2<=r; dx2+=passo){
-          if (dx2*dx2 + dy2*dy2 > r*r) continue;
-          var sx = Math.round(p.x+dx2), sy = Math.round(p.y+dy2);
-          if (sx<0||sy<0||sx>=sw||sy>=sh) continue;
-          var i = (sy*sw+sx)*4;
-          var lum = (dados[i]*0.299 + dados[i+1]*0.587 + dados[i+2]*0.114)/255;
-          soma += (1-lum); cont++;
-        }
-      }
-      linha[c] = cont ? soma/cont : 0;
-    }
-    vals[q] = linha;
-  }
-  cor.valores = vals;
-  decidir();
-  var cantos = [fn(0,0), fn(1,0), fn(1,1), fn(0,1)];
-  var p = proporcao(cantos);
-  cor.reto = endireitar(cor.src, fn, p.RW, p.RH);
-  $("#cor-passo-cantos").classList.add("oculto");
-  $("#cor-passo-conferencia").classList.remove("oculto");
-  $("#rotulo").value = "";
-  montarConferencia();
-  desenharMapa();
-  window.scrollTo({top:0, behavior:"auto"});
-}
-
-function decidir(){
-  var n = nq();
-  cor.respostas = new Array(n);
-  cor.duvidas = new Array(n);
-  for (var q=0;q<n;q++){
-    var v = cor.valores[q];
-    var med = mediana(v);
-    var devs = v.map(function(x){ return x - med; });
-    var melhor = -1, iMelhor = -1, segundo = -1;
-    for (var i=0;i<5;i++){
-      if (devs[i] > melhor){ segundo = melhor; melhor = devs[i]; iMelhor = i; }
-      else if (devs[i] > segundo) segundo = devs[i];
-    }
-    if (melhor < estado.limiar){
-      cor.respostas[q] = null; cor.duvidas[q] = "sem";
-    } else if (segundo > melhor * estado.tol){
-      cor.respostas[q] = iMelhor; cor.duvidas[q] = "dupla";
-    } else {
-      cor.respostas[q] = iMelhor; cor.duvidas[q] = null;
-    }
-  }
-}
-
-function notasAtuais(){
-  var notas = [];
-  for (var d=0; d<4; d++){
-    var qs = questoesDaDisciplina(d);
-    var acertos = 0;
-    qs.forEach(function(q){
-      var g = estado.gabarito[q];
-      if (g === "N") acertos++;
-      else if (g !== null && g !== undefined && cor.respostas[q] === g) acertos++;
-    });
-    notas.push({ acertos:acertos, total:qs.length, nota: qs.length ? acertos*10/qs.length : 0 });
-  }
-  return notas;
-}
-
-function montarConferencia(){
-  var box = $("#grade-conferencia");
-  if (!box){
-    box = el("div","grade-gab");
-    box.id = "grade-conferencia";
-    $("#resumo-notas").insertAdjacentElement("beforebegin", box);
-  }
-  box.innerHTML = "";
-  var n = nq(), duvidas = 0;
-  for (var q=0;q<n;q++){
-    (function(q){
-      var linha = el("div","q");
-      if (cor.duvidas[q]) { linha.classList.add("duvida"); duvidas++; }
-      linha.appendChild(el("span","n",String(q+1)));
-      var pt = el("span","pt");
-      pt.style.background = CORES_DISC[estado.discQ[q]];
-      linha.appendChild(pt);
-      if (cor.duvidas[q]){
-        var t = el("span",null, cor.duvidas[q]==="sem" ? "sem marcação" : "duas marcações");
-        t.style.fontSize = "12px"; t.style.color = "#B5820B";
-        linha.appendChild(t);
-      }
-      var alts = el("div","alts");
-      for (var i=0;i<5;i++){
-        (function(i){
-          var b = el("button", null, LETRAS[i]);
-          b.type = "button";
-          if (cor.respostas[q] === i) b.className = "sel";
-          b.addEventListener("click", function(){
-            cor.respostas[q] = i; cor.duvidas[q] = null;
-            montarConferencia(); desenharMapa();
-          });
-          alts.appendChild(b);
-        })(i);
-      }
-      var bv = el("button","nula","—");
-      bv.type = "button";
-      bv.title = "Sem resposta";
-      if (cor.respostas[q] === null) bv.className = "nula sel";
-      bv.addEventListener("click", function(){
-        cor.respostas[q] = null; cor.duvidas[q] = null;
-        montarConferencia(); desenharMapa();
-      });
-      alts.appendChild(bv);
-      linha.appendChild(alts);
-      box.appendChild(linha);
-    })(q);
-  }
-  var pill = $("#pill-duvidas");
-  pill.textContent = duvidas === 0 ? "sem dúvidas" : (duvidas + (duvidas>1?" dúvidas":" dúvida"));
-  pill.className = "pill" + (duvidas ? " alerta" : "");
-  montarResumoNotas();
-}
-
-function montarResumoNotas(){
-  var box = $("#resumo-notas");
-  box.innerHTML = "";
-  var notas = notasAtuais();
-  for (var d=0; d<4; d++){
-    var cx = el("div","nota-caixa");
-    var nome = el("div","nome");
-    var pt = el("span","pt"); pt.style.background = CORES_DISC[d];
-    nome.appendChild(pt);
-    nome.appendChild(el("span",null,estado.disciplinas[d]));
-    var v = el("div","v");
-    v.textContent = fmt(notas[d].nota);
-    var s = el("small",null," (" + notas[d].acertos + "/" + notas[d].total + ")");
-    v.appendChild(s);
-    cx.appendChild(nome); cx.appendChild(v);
-    box.appendChild(cx);
-  }
-}
-
-function desenharMapa(){
-  var cv = $("#cor-mapa");
-  var reto = cor.reto;
-  if (!reto) return;
-  var larg = cv.parentElement.clientWidth || 320;
-  var esc = larg / reto.width;
-  var dpr = Math.min(2, window.devicePixelRatio || 1);
-  cv.width = Math.round(larg*dpr);
-  cv.height = Math.round(reto.height*esc*dpr);
-  cv.style.width = larg+"px";
-  cv.style.height = (reto.height*esc)+"px";
-  var c = cv.getContext("2d");
-  c.setTransform(dpr*esc,0,0,dpr*esc,0,0);
-  c.drawImage(reto,0,0);
-  var W = reto.width, H = reto.height, k = 1/esc;
-  var n = nq();
-  for (var q=0;q<n;q++){
-    var cels = estado.calib.celulas[q];
-    if (!cels) continue;
-    var r = raioCelula(q, W, H) * 1.25;
-    if (cor.duvidas[q]){
-      for (var i=0;i<5;i++){
-        c.beginPath();
-        c.rect(cels[i].u*W - r, cels[i].v*H - r, r*2, r*2);
-        c.fillStyle = "rgba(181,130,11,.22)";
-        c.fill();
-        c.strokeStyle = "rgba(181,130,11,.9)";
-        c.lineWidth = 1.6*k; c.stroke();
-      }
-    }
-    var a = cor.respostas[q];
-    if (a !== null && a !== undefined){
-      c.beginPath();
-      c.rect(cels[a].u*W - r, cels[a].v*H - r, r*2, r*2);
-      c.fillStyle = "rgba(31,122,85,.28)";
-      c.fill();
-      c.strokeStyle = "rgba(31,122,85,.95)";
-      c.lineWidth = 2.2*k; c.stroke();
-    }
-  }
-}
-
-function salvarProva(){
-  var rot = ($("#rotulo").value || "").trim();
-  if (!rot) rot = "Prova " + (estado.provas.length + 1);
-  var notas = notasAtuais();
-  var letras = cor.respostas.map(function(r){ return r === null || r === undefined ? "-" : LETRAS[r]; }).join("");
-  estado.provas.push({ rotulo: rot, notas: notas, respostas: letras });
-  guardar();
-  atualizarNotasTabela();
-  cor.src = null; cor.valores = null; cor.reto = null;
-  $("#cor-passo-conferencia").classList.add("oculto");
-  $("#cor-passo-foto").classList.remove("oculto");
-  var ok = el("div","aviso ok","Prova de " + rot + " salva. Notas: " + notas.map(function(x){return fmt(x.nota);}).join("  ·  "));
-  $("#cor-passo-foto").prepend(ok);
-  setTimeout(function(){ ok.remove(); }, 7000);
-  window.scrollTo({top:0, behavior:"auto"});
-}
-
-/* ---------------------------------------------------------------
-   Aba Notas
---------------------------------------------------------------- */
-function atualizarNotasTabela(){
-  var box = $("#tabela-notas");
-  box.innerHTML = "";
-  $("#pill-provas").textContent = estado.provas.length + (estado.provas.length === 1 ? " prova" : " provas");
-  $("#pill-provas").className = "pill" + (estado.provas.length ? "" : " pendente");
-  if (!estado.provas.length){
-    box.appendChild(el("div","vazio","Nenhuma prova corrigida ainda. As notas aparecem aqui conforme você confirma cada cartão."));
-    return;
-  }
-  var rol = el("div","rolagem");
-  var t = document.createElement("table");
-  var thead = document.createElement("thead");
-  var tr = document.createElement("tr");
-  tr.appendChild(el("th",null,"Prova"));
-  for (var d=0; d<4; d++) tr.appendChild(el("th",null,estado.disciplinas[d]));
-  tr.appendChild(el("th",null,""));
-  thead.appendChild(tr); t.appendChild(thead);
-  var tb = document.createElement("tbody");
-  estado.provas.forEach(function(p, idx){
-    var l = document.createElement("tr");
-    l.appendChild(el("td",null,p.rotulo));
-    for (var d=0; d<4; d++){
-      var td = el("td","nota", fmt(p.notas[d].nota));
-      l.appendChild(td);
-    }
-    var tdx = el("td");
-    var rm = el("button",null,"×");
-    rm.type = "button";
-    rm.setAttribute("aria-label","Remover a prova de " + p.rotulo);
-    rm.style.cssText = "border:1px solid var(--linha);background:#fff;border-radius:7px;width:34px;height:34px;color:var(--erro);font-size:16px;cursor:pointer";
-    rm.addEventListener("click", function(){
-      if (!confirm("Remover a prova de " + p.rotulo + "?")) return;
-      estado.provas.splice(idx,1);
-      guardar(); atualizarNotasTabela();
-    });
-    tdx.appendChild(rm);
-    l.appendChild(tdx);
-    tb.appendChild(l);
-  });
-  t.appendChild(tb);
-  rol.appendChild(t);
-  box.appendChild(rol);
-}
-
-function baixar(nome, conteudo, tipo){
-  var blob = new Blob([conteudo], {type: tipo});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href = url; a.download = nome;
-  document.body.appendChild(a); a.click();
-  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
-}
-
-function exportarCSV(){
-  if (!estado.provas.length){ alert("Ainda não há provas corrigidas."); return; }
-  var cab = ["Prova"];
-  for (var d=0; d<4; d++){
-    cab.push(estado.disciplinas[d] + " - acertos");
-    cab.push(estado.disciplinas[d] + " - nota");
-  }
-  cab.push("Respostas marcadas");
-  var linhas = [cab.join(";")];
-  estado.provas.forEach(function(p){
-    var l = ['"' + String(p.rotulo).replace(/"/g,'""') + '"'];
-    for (var d=0; d<4; d++){
-      l.push(p.notas[d].acertos + "/" + p.notas[d].total);
-      l.push(p.notas[d].nota.toFixed(2).replace(".",","));
-    }
-    l.push(p.respostas);
-    linhas.push(l.join(";"));
-  });
-  baixar("notas.csv", "\ufeff" + linhas.join("\r\n"), "text/csv;charset=utf-8");
-}
-
-/* ---------------------------------------------------------------
-   Ligações da interface
---------------------------------------------------------------- */
-function abrirAba(id){
-  document.querySelectorAll(".tela").forEach(function(s){ s.classList.toggle("ativa", s.id === id); });
-  document.querySelectorAll(".abas button").forEach(function(b){ b.classList.toggle("ativa", b.dataset.tab === id); });
-  window.scrollTo({top:0, behavior:"auto"});
-  if (id === "tab-corrigir") atualizarPendencias();
-  if (id === "tab-notas") atualizarNotasTabela();
-}
-document.querySelectorAll(".abas button").forEach(function(b){
-  b.addEventListener("click", function(){ abrirAba(b.dataset.tab); });
-});
-
-$("#bt-avancado").addEventListener("click", function(){
-  avancado = !avancado;
-  $("#bt-avancado").textContent = avancado ? "Ocultar disciplina por questão" : "Trocar disciplina por questão";
-  montarGabarito();
-});
-$("#bt-limpar-gab").addEventListener("click", function(){
-  if (!confirm("Apagar todas as respostas do gabarito?")) return;
-  for (var q=0;q<estado.gabarito.length;q++) estado.gabarito[q] = null;
-  montarGabarito(); guardar();
-});
-$("#bt-add-bloco").addEventListener("click", function(){
-  var ult = estado.blocos[estado.blocos.length-1];
-  var inicio = ult ? ult[1]+1 : 1;
-  estado.blocos.push([inicio, inicio+4]);
-  estado.calib = null;
-  montarBlocos(); montarGabarito(); atualizarCalibPill(); guardar();
-});
-$("#bt-blocos-padrao").addEventListener("click", function(){
-  estado.blocos = BLOCOS_PADRAO.map(function(b){ return b.slice(); });
-  estado.calib = null;
-  montarBlocos(); montarGabarito(); atualizarCalibPill(); guardar();
-});
-
-$("#bt-foto-calib").addEventListener("click", function(){ $("#arq-calib").click(); });
-$("#arq-calib").addEventListener("change", function(ev){
-  if (ev.target.files && ev.target.files[0]) iniciarCalibracao(ev.target.files[0]);
-  ev.target.value = "";
-});
-$("#cal-desfazer").addEventListener("click", function(){ if (selCal) selCal.desfazer(); });
-$("#cal-avancar").addEventListener("click", avancarCalibracao);
-$("#cal-recomecar").addEventListener("click", function(){
-  cal.fase = "cantos"; cal.pontos = []; cal.blocoIdx = 0;
-  $("#cal-passo-canvas").classList.add("oculto");
-  $("#cal-passo-foto").classList.remove("oculto");
-});
-
-$("#bt-foto-prova").addEventListener("click", function(){ $("#arq-prova").click(); });
-$("#arq-prova").addEventListener("change", function(ev){
-  if (ev.target.files && ev.target.files[0]) iniciarCorrecao(ev.target.files[0]);
-  ev.target.value = "";
-});
-$("#cor-desfazer").addEventListener("click", function(){ if (selCor) selCor.desfazer(); });
-$("#cor-ler").addEventListener("click", amostrar);
-$("#cor-trocar-foto").addEventListener("click", function(){
-  $("#cor-passo-cantos").classList.add("oculto");
-  $("#cor-passo-foto").classList.remove("oculto");
-});
-$("#bt-refazer-cantos").addEventListener("click", function(){
-  $("#cor-passo-conferencia").classList.add("oculto");
-  $("#cor-passo-cantos").classList.remove("oculto");
-  window.scrollTo({top:0, behavior:"auto"});
-});
-$("#bt-salvar-prova").addEventListener("click", salvarProva);
-
-$("#sl-limiar").addEventListener("input", function(){
-  estado.limiar = parseInt(this.value,10)/100;
-  $("#v-limiar").textContent = this.value + "%";
-  if (cor.valores){ decidir(); montarConferencia(); desenharMapa(); }
-  guardar();
-});
-$("#sl-tol").addEventListener("input", function(){
-  estado.tol = parseInt(this.value,10)/100;
-  $("#v-tol").textContent = this.value + "%";
-  if (cor.valores){ decidir(); montarConferencia(); desenharMapa(); }
-  guardar();
-});
-
-$("#bt-csv").addEventListener("click", exportarCSV);
-$("#bt-limpar-notas").addEventListener("click", function(){
-  if (!estado.provas.length) return;
-  if (!confirm("Apagar as notas de todas as " + estado.provas.length + " provas?")) return;
-  estado.provas = [];
-  guardar(); atualizarNotasTabela();
-});
-
-$("#bt-exportar-config").addEventListener("click", function(){
-  var cfg = {
-    disciplinas: estado.disciplinas, gabarito: estado.gabarito, discQ: estado.discQ,
-    blocos: estado.blocos, calib: estado.calib, limiar: estado.limiar, tol: estado.tol
+/* ---- ajustes ---- */
+TELAS.config=()=>{
+  const p=prova();titulo('Dados da prova');
+  const t=JSON.parse(JSON.stringify(p));
+  $('#tela').innerHTML=`<div class="card"><label style="margin-top:0">Nome da prova</label><input id="fNome" value="${esc(t.nome)}" maxlength="48">
+    <label>Turma</label><input id="fTurma" value="${esc(t.turma)}" maxlength="20" placeholder="Ex.: 2º A"></div>
+  <div class="card"><h2>Quantas questões</h2>${stepperHTML('fNQ',t.nQ)}<h2 style="margin-top:18px">Letras de cada questão</h2><div id="fLet">${escolhaLetras(t.nAlt)}</div></div>
+  <div class="card"><h2>Disciplinas</h2><p class="muted" style="margin-top:0">Quantas disciplinas a prova tem:</p><div id="fDisc"></div></div>
+  <div class="card"><h2>Nomes dos alunos</h2><p class="muted" style="margin-top:0">Um nome por linha, na ordem da chamada.</p><textarea id="fAl" placeholder="Ana Souza&#10;Bruno Lima">${esc(t.alunos)}</textarea></div>
+  <button class="btn verde" id="fSalvar">Salvar</button>
+  <button class="btn perigo" id="fApagar" style="margin-top:30px">Apagar esta prova</button>`;
+  $('#fNome').oninput=e=>t.nome=e.target.value;$('#fTurma').oninput=e=>t.turma=e.target.value;$('#fAl').oninput=e=>t.alunos=e.target.value;
+  const box=$('#fDisc');
+  stepperLiga($('#fNQ'),1,maxQuestoes(t.nAlt),v=>{ajustaNQ(t,v);discLiga(t,box,false)});
+  const ligaLet=()=>$('#fLet').querySelectorAll('.escolha').forEach(b=>b.onclick=()=>{t.nAlt=+b.dataset.a;const mx=maxQuestoes(t.nAlt);if(t.nQ>mx){ajustaNQ(t,mx);$('#fNQ').value=mx;discLiga(t,box,false)}$('#fLet').innerHTML=escolhaLetras(t.nAlt);ligaLet()});
+  ligaLet();discLiga(t,box,false);
+  $('#fSalvar').onclick=async()=>{
+    const pr=problemasDisc(t);if(pr.length){aviso('Confira as disciplinas',pr.map(esc).join('<br><br>'));return}
+    const mudou=t.nQ!==p.nQ||t.nAlt!==p.nAlt;
+    if(mudou&&p.res.length&&!await pergunta('Você mudou o número de questões ou de letras, mas já tem cartões corrigidos. As notas antigas podem ficar erradas e será preciso imprimir cartões novos. Salvar mesmo assim?','Sim, salvar'))return;
+    t.gab=Array.from({length:t.nQ},(_,i)=>{const v=p.gab[i];return v==null||v>=t.nAlt?-1:v});
+    if(mudou)t.impresso=false;
+    Object.assign(p,{nome:t.nome.trim()||'Prova',turma:t.turma.trim(),nQ:t.nQ,nAlt:t.nAlt,disc:t.disc,gab:t.gab,alunos:t.alunos,impresso:t.impresso});
+    salvar();toast('Dados salvos');if(mudou)aviso('Imprima de novo','O cartão mudou. Baixe e imprima o cartão novo antes de aplicar a prova.').then(voltar);else voltar();
   };
-  baixar("configuracao-corretor.json", JSON.stringify(cfg), "application/json");
-});
-$("#bt-importar-config").addEventListener("click", function(){ $("#arq-config").click(); });
-$("#arq-config").addEventListener("change", function(ev){
-  var f = ev.target.files && ev.target.files[0];
-  ev.target.value = "";
-  if (!f) return;
-  var fr = new FileReader();
-  fr.onload = function(){
-    try{
-      var o = JSON.parse(fr.result);
-      ["disciplinas","gabarito","discQ","blocos","calib","limiar","tol"].forEach(function(k){
-        if (o[k] !== undefined) estado[k] = o[k];
-      });
-      montarDisciplinas(); montarBlocos(); montarGabarito(); atualizarCalibPill();
-      sincronizarSliders(); guardar();
-      alert("Configuração carregada.");
-    }catch(e){
-      alert("Esse arquivo não é uma configuração válida do corretor.");
-    }
-  };
-  fr.readAsText(f);
-});
+  $('#fApagar').onclick=async()=>{if(!await pergunta('Apagar a prova "'+p.nome+'" e todas as notas dela? Não tem como desfazer.','Sim, apagar tudo',true))return;DB.provas=DB.provas.filter(x=>x.id!==p.id);DB.ativa=null;salvar();atual={tela:'inicio'};pilha=[];render()};
+};
 
-function sincronizarSliders(){
-  $("#sl-limiar").value = String(Math.round(estado.limiar*100));
-  $("#v-limiar").textContent = Math.round(estado.limiar*100) + "%";
-  $("#sl-tol").value = String(Math.round(estado.tol/0.05)*5);
-  $("#v-tol").textContent = Math.round(estado.tol*100) + "%";
+/* ---- cartão ---- */
+TELAS.cartao=()=>{
+  const p=prova();titulo('Imprimir cartões');
+  $('#tela').innerHTML=`<div class="card"><p style="margin-top:0">Baixe o cartão e imprima em <b>folha A4</b>. Pode imprimir um só e tirar xerox para a turma.</p>
+  <button class="btn" id="bPdf">${IC.baixar} Baixar o cartão (PDF)</button>
+  ${window.self===window.top?'<button class="btn sec" id="bImp">'+IC.impressora+' Imprimir direto</button>':''}
+  <button class="btn leve" id="bPng">Baixar como foto (se o PDF não abrir)</button></div>
+  <div class="cardprev">${cardSVG(p)}</div>
+  <div class="card" style="margin-top:14px"><h2>Explique para os alunos</h2><div class="ilus" style="margin:0">${DES.pintar}</div>
+  <p>Pintar a bolinha inteira com caneta preta ou azul escura. Não rasurar e não dobrar a folha.</p>
+  <p>Marcar o número de chamada em duas linhas, dezena e unidade. Exemplo: o número <b>7</b> é dezena <b>0</b> e unidade <b>7</b>. O número <b>23</b> é dezena <b>2</b> e unidade <b>3</b>.</p></div>
+  <button class="btn verde" id="bJa">${IC.check} Já imprimi, ir para o próximo passo</button>`;
+  const marca=()=>{if(!p.impresso){p.impresso=true;salvar()}};
+  if($('#bImp'))$('#bImp').onclick=()=>{marca();$('#printArea').innerHTML=cardSVG(p);setTimeout(()=>window.print(),100)};
+  $('#bPng').onclick=()=>{marca();svgParaCanvas(cardSVG(p),c=>c.toBlob(b=>baixar(b,'cartao-'+limpa(p.nome)+'.png'),'image/png'))};
+  $('#bPdf').onclick=()=>{marca();svgParaCanvas(cardSVG(p),c=>c.toBlob(b=>b.arrayBuffer().then(a=>baixar(pdfDeJpeg(new Uint8Array(a),c.width,c.height),'cartao-'+limpa(p.nome)+'.pdf')),'image/jpeg',0.92))};
+  $('#bJa').onclick=()=>{marca();voltar()};
+};
+
+/* ---- gabarito ---- */
+TELAS.gabarito=()=>{
+  const p=prova();titulo('Gabarito');
+  const cont=()=>{const n=p.gab.filter(v=>v!==-1).length;$('#gCont').innerHTML=n===p.nQ?'<span style="color:var(--verde)">✓ Todas as questões marcadas</span>':`Marcadas: <b>${n}</b> de ${p.nQ}`};
+  let h=`<div class="card"><p style="margin-top:0">Toque na <b>letra certa</b> de cada questão.</p><button class="btn sec" id="bLerGab">${IC.camera} Ou fotografar um cartão com as respostas certas</button></div>
+  <div class="card" style="position:sticky;top:64px;z-index:3;padding:12px 16px" id="gCont"></div><div class="card" style="padding:8px">`;
+  for(let i=0;i<p.nQ;i++){h+=`<div class="qrow"><span class="qn">${i+1}</span>`;for(let k=0;k<p.nAlt;k++)h+=`<button class="chip ${p.gab[i]===k?'on':''}" data-q="${i}" data-k="${k}">${LET[k]}</button>`;
+    h+=`<button class="chip anul ${p.gab[i]===-3?'on':''}" data-q="${i}" data-k="-3">Anular</button></div>`}
+  h+=`</div><button class="btn verde" id="bOk">${IC.check} Pronto</button>`;
+  $('#tela').innerHTML=h;cont();
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const q=+b.dataset.q,k=+b.dataset.k;p.gab[q]=p.gab[q]===k?-1:k;salvar();
+    b.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',+c.dataset.k===p.gab[q]));cont()});
+  $('#bLerGab').onclick=()=>corrigirCartao('gabarito');
+  $('#bOk').onclick=()=>{const n=p.gab.filter(v=>v!==-1).length;if(n<p.nQ)toast(`Ainda faltam ${p.nQ-n} questões`);voltar()};
+};
+
+
+/* ============ câmera ============ */
+let cam={stream:null,modo:null,rodando:false,est:0,ult:null,armado:true,perdido:0,track:null,luz:false,falhou:false};
+const video=$('#video'),ov=$('#ov'),cMsg=$('#camMsg');
+const peq=document.createElement('canvas'),peqx=peq.getContext('2d',{willReadFrequently:true});
+const grande=document.createElement('canvas'),grandex=grande.getContext('2d',{willReadFrequently:true});
+function podeAoVivo(){return !cam.falhou&&!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&window.isSecureContext!==false&&window.self===window.top}
+// ponto de entrada: câmera ao vivo quando dá; senão, a câmera do próprio celular (foto)
+function corrigirCartao(modo){cam.modo=modo;if(podeAoVivo())abrirCamera(modo);else $('#arqFoto').click()}
+function msg(t,v){cMsg.textContent=t;cMsg.classList.toggle('verde',!!v)}
+async function abrirCamera(modo){
+  cam.modo=modo;cam.armado=true;cam.est=0;cam.ult=null;
+  $('#cam').classList.add('on');atualizaCont();msg('Abrindo a câmera…');
+  if(!cam.stream){
+    try{cam.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false})}
+    catch(e){cam.falhou=true;fecharCamera();
+      const r=await janela('Câmera não liberou','O celular não deixou o app usar a câmera ao vivo. Você ainda pode corrigir tirando uma foto de cada cartão.',[{t:IC.camera+' Tirar foto do cartão'},{t:'Voltar',cls:'sec'}]);
+      if(r===0)$('#arqFoto').click();return}
+    video.srcObject=cam.stream;cam.track=cam.stream.getVideoTracks()[0];
+    try{await video.play()}catch(e){}
+    try{const cp=cam.track.getCapabilities&&cam.track.getCapabilities();$('#cLuz').style.display=cp&&cp.torch?'':'none';
+      if(cp&&cp.focusMode&&cp.focusMode.includes('continuous'))cam.track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){$('#cLuz').style.display='none'}
+  }
+  cam.rodando=true;msg('Mostre o cartão inteiro, com os 4 quadrados pretos');laco();
+}
+function fecharCamera(){cam.rodando=false;$('#cam').classList.remove('on');if(cam.stream){cam.stream.getTracks().forEach(t=>t.stop());cam.stream=null;video.srcObject=null}cam.luz=false}
+function atualizaCont(){const p=prova();$('#camCont').textContent=cam.modo==='gabarito'?'Lendo o gabarito':(p?p.res.length+' corrigidos':'')}
+$('#cSair').onclick=()=>{fecharCamera();render()};
+$('#cLuz').onclick=()=>{if(!cam.track)return;cam.luz=!cam.luz;cam.track.applyConstraints({advanced:[{torch:cam.luz}]}).catch(()=>toast('Lanterna indisponível'))};
+$('#cFoto').onclick=()=>$('#arqFoto').click();
+$('#arqFoto').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;carregando(true,'Lendo o cartão…');
+  const img=new Image();const url=URL.createObjectURL(f);
+  img.onerror=()=>{carregando(false);URL.revokeObjectURL(url);mostraFalha()};
+  img.onload=()=>{setTimeout(()=>{try{
+    const s=Math.min(1,2400/Math.max(img.width,img.height));grande.width=Math.round(img.width*s);grande.height=Math.round(img.height*s);grandex.drawImage(img,0,0,grande.width,grande.height);URL.revokeObjectURL(url);
+    const id=grandex.getImageData(0,0,grande.width,grande.height);const R=processa(id,prova());carregando(false);
+    if(!R.ok){mostraFalha();return}bip();lido(R,id)}catch(x){carregando(false);mostraFalha()}},30)};
+  img.src=url};
+function mostraFalha(){fecharCamera();ir('falha',{})}
+function laco(){
+  if(!cam.rodando)return;
+  if(video.readyState>=2&&video.videoWidth){
+    const vw=video.videoWidth,vh=video.videoHeight,f=Math.max(vw,vh)/720;
+    peq.width=Math.round(vw/f);peq.height=Math.round(vh/f);peqx.drawImage(video,0,0,peq.width,peq.height);
+    const id=peqx.getImageData(0,0,peq.width,peq.height);const q=detectMarkers(toGray(id),peq.width,peq.height);
+    desenhaOv(q,f,vw,vh);
+    if(q){
+      if(!cam.armado){msg('Agora mostre o próximo cartão');cam.perdido=0}
+      else{const tol=Math.max(peq.width,peq.height)*0.012;
+        const est=cam.ult&&q.every((c,i)=>Math.hypot(c.x-cam.ult[i].x,c.y-cam.ult[i].y)<tol);
+        cam.est=est?cam.est+1:1;cam.ult=q;
+        msg('Achei o cartão! Segure parado…',true);
+        if(cam.est>=3){
+          grande.width=vw;grande.height=vh;grandex.drawImage(video,0,0);const big=grandex.getImageData(0,0,vw,vh);const R=processa(big,prova());
+          if(R.ok){cam.est=0;cam.armado=false;bip();cam.rodando=false;$('#cam').classList.remove('on');lido(R,big);return}
+        }}
+    }else{cam.est=0;cam.ult=null;if(!cam.armado){cam.perdido++;if(cam.perdido>=2)cam.armado=true}
+      msg(cam.armado?'Mostre o cartão inteiro, com os 4 quadrados pretos':'Agora mostre o próximo cartão')}
+  }
+  setTimeout(()=>requestAnimationFrame(laco),90);
+}
+function desenhaOv(q,f,vw,vh){
+  const dpr=window.devicePixelRatio||1,cw=ov.clientWidth,ch=ov.clientHeight;
+  if(ov.width!==Math.round(cw*dpr)){ov.width=Math.round(cw*dpr);ov.height=Math.round(ch*dpr)}
+  const x=ov.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,cw,ch);
+  const s=Math.min(cw/vw,ch/vh),ox=(cw-vw*s)/2,oy=(ch-vh*s)/2;
+  if(!q){const gh=Math.min(vh*s*0.86,(vw*s*0.92)/0.707),gw=gh*0.707;const gx=(cw-gw)/2,gy=(ch-gh)/2;
+    x.setLineDash([12,10]);x.strokeStyle='rgba(255,255,255,.8)';x.lineWidth=3;x.strokeRect(gx,gy,gw,gh);x.setLineDash([]);
+    x.fillStyle='rgba(255,255,255,.85)';const m=Math.max(14,gw*0.07);[[gx,gy],[gx+gw-m,gy],[gx,gy+gh-m],[gx+gw-m,gy+gh-m]].forEach(([a,b])=>x.fillRect(a,b,m,m));return}
+  const P=q.map(c=>[(c.x*f)*s+ox,(c.y*f)*s+oy]);
+  x.strokeStyle='#2ecc71';x.lineWidth=5;x.beginPath();x.moveTo(...P[0]);x.lineTo(...P[1]);x.lineTo(...P[3]);x.lineTo(...P[2]);x.closePath();x.stroke();
+  x.fillStyle='#2ecc71';for(const[a,b]of P){x.beginPath();x.arc(a,b,10,0,7);x.fill()}
+}
+let actx=null;function bip(){try{navigator.vibrate&&navigator.vibrate(90)}catch(e){}
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=1100;g.gain.value=0.15;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+0.12)}catch(e){}}
+
+function lido(R,id){
+  const img=retifica(id,R.H,2.4);
+  const dados={resp:R.resp.slice(),duv:R.duv.slice(),num:R.num,numDuv:R.numDuv,img};
+  if(atual&&(atual.tela==='falha'))pilha.length&&(atual=pilha.pop());
+  ir(cam.modo==='gabarito'?'revGab':'revisao',dados);
 }
 
-/* ---------------------------------------------------------------
-   Início
---------------------------------------------------------------- */
-restaurar().then(function(){
-  ajustarTamanhos();
-  montarDisciplinas();
-  montarBlocos();
-  montarGabarito();
-  atualizarCalibPill();
-  atualizarNotasTabela();
-  sincronizarSliders();
-  atualizarPendencias();
-});
+/* ---- não consegui ler ---- */
+TELAS.falha=()=>{
+  titulo('Não consegui ler');
+  $('#tela').innerHTML=`<div class="card centro"><div class="grandeOk" style="background:var(--verm)">${IC.erro}</div><h2 class="grande">Não consegui ler este cartão</h2></div>
+  <div class="card"><div class="ilus">${DES.fotografar}</div><b>Para dar certo:</b><ol style="padding-left:22px;margin:8px 0 0"><li>Coloque o cartão numa mesa, em lugar claro.</li><li>Segure o celular em pé, bem em cima da folha.</li><li>Mostre a folha inteira, com os <b>4 quadrados pretos</b> aparecendo.</li><li>Cuidado com a sombra da mão e do celular.</li></ol></div>
+  <button class="btn verde" id="fTenta">${IC.camera} Tentar de novo</button><button class="btn sec" id="fVolta">Voltar</button>`;
+  $('#fTenta').onclick=()=>{voltar();corrigirCartao(cam.modo||'corrigir')};
+  $('#fVolta').onclick=voltar;
+};
+
+/* ---- conferência de um cartão ---- */
+function desenhaPrev(cv,img,p,resp,duv,modoGab){
+  cv.width=img.width;cv.height=img.height;const x=cv.getContext('2d');x.drawImage(img,0,0);
+  const e=img.width/210,L=layout(p),r=L.d/2*e+3;x.lineWidth=3;
+  L.qs.forEach((Q,i)=>{
+    if(duv[i]){x.fillStyle='rgba(255,200,0,.3)';x.fillRect((Q.cx0-1)*e,(Q.cy-L.rowH/2)*e,(Q.colW+2)*e,L.rowH*e)}
+    const g=p.gab[i],a=resp[i];
+    Q.alts.forEach(([bx,by],k)=>{let cor=null;
+      if(modoGab){if(a===k)cor='#1f4e8c'}
+      else{if(a===k)cor=(g===k||g===-3)?'#17824a':'#c0392b';else if(g===k)cor='rgba(23,130,74,.5)'}
+      if(cor){x.strokeStyle=cor;x.beginPath();x.arc(bx*e,by*e,r,0,7);x.stroke()}});
+  });
+}
+function linhaQ(p,i,duv){let h=`<div class="qrow ${duv?'duv':''}" id="qr${i}"><span class="qn">${i+1}</span>`;for(let k=0;k<p.nAlt;k++)h+=`<button class="chip" data-q="${i}" data-k="${k}">${LET[k]}</button>`;return h+`<span class="st" id="st${i}"></span></div>`}
+function telaRevisao(d,modoGab){
+  const p=prova(),editId=d.editId;titulo(modoGab?'Conferir gabarito':editId?'Correção do aluno':'Conferir correção');
+  const resp=d.resp,duv=d.duv,idxDuv=duv.map((v,i)=>v?i:-1).filter(i=>i>=0);
+  let h='';
+  if(!modoGab){
+    h+=`<div class="card"><label style="margin-top:0">Número de chamada ${d.numDuv?'<span class="tag d">confira</span>':''}</label>
+    <input id="fNum" type="number" inputmode="numeric" min="1" max="99" value="${d.num??''}" placeholder="Digite o número" style="font-size:1.5em;font-weight:800;text-align:center">
+    <div id="nomeA" style="margin-top:8px;font-weight:700;text-align:center"></div><div class="notas" id="notas"></div></div>`;
+  }
+  if(idxDuv.length){h+=`<div class="aviso"><b>Confira ${idxDuv.length===1?'esta questão':'estas '+idxDuv.length+' questões'}.</b> Olhe no cartão do aluno e toque na letra que ele marcou. Se ele não marcou nada, toque na letra azul para apagar.</div><div class="card" style="padding:8px">${idxDuv.map(i=>linhaQ(p,i,true)).join('')}</div>`}
+  else if(!editId){const nb=resp.filter(v=>v===-1).length,nm=resp.filter(v=>v===-2).length;
+    h+=`<div class="okbox">${IC.check.replace('<svg','<svg width="22" height="22" style="vertical-align:-5px"')} O app leu o cartão sem dúvidas.${nb||nm?`<br><span class="muted">${[nb?nb+(nb===1?' questão em branco':' questões em branco'):'',nm?nm+(nm===1?' questão com 2 marcas (anulada)':' questões com 2 marcas (anuladas)'):''].filter(Boolean).join(' e ')}.</span>`:''}</div>`}
+  h+=`<button class="btn verde" id="bSalvarR">${IC.check} ${modoGab?'Usar este gabarito':'Está certo, salvar'}</button>`;
+  const todas=Array.from({length:p.nQ},(_,i)=>i).filter(i=>!duv[i]).map(i=>linhaQ(p,i,false)).join('');
+  if(modoGab||editId)h+=`<div class="card" style="padding:8px">${todas}</div><button class="btn verde" id="bSalvarR2">${IC.check} ${modoGab?'Usar este gabarito':'Salvar'}</button>`;
+  else h+=`<details><summary>Ver o cartão e todas as questões</summary><div class="dentro">${d.img?'<canvas id="prev"></canvas><p class="muted">Verde: acertou. Vermelho: errou. Círculo verde claro: a resposta certa.</p>':''}${todas}</div></details>`;
+  if(modoGab&&d.img)h+=`<details><summary>Ver a foto do cartão</summary><div class="dentro"><canvas id="prev"></canvas></div></details>`;
+  if(editId)h+=`<button class="btn perigo" id="bApagarR">Apagar a correção deste aluno</button>`;
+  else h+=`<button class="btn sec" id="bDesc">${IC.camera} Ler o cartão de novo</button>`;
+  $('#tela').innerHTML=h;
+  const cv=$('#prev');
+  function pinta(i){
+    const row=$('#qr'+i);if(!row)return;const g=p.gab[i],a=resp[i];
+    row.querySelectorAll('.chip').forEach(c=>{const k=+c.dataset.k;c.className='chip';
+      if(modoGab){if(a===k)c.classList.add('on')}
+      else{if(a===k)c.classList.add(g===k||g===-3?'certo':'errado');else if(g===k)c.classList.add('gab')}});
+    let t='';if(a===-1)t='<span class="tag">em branco</span>';if(a===-2)t='<span class="tag m">2 marcas: anulada</span>';if(!modoGab&&g===-3)t+='<span class="tag">anulada</span>';
+    $('#st'+i).innerHTML=t;
+  }
+  function notas(){if(modoGab)return;const c=corrigir(p,resp);$('#notas').innerHTML=c.disc.map(x=>`<div>${esc(x.nome)}<b>${fmt(x.nota)}</b>${x.ac} de ${x.n} certas</div>`).join('');
+    const n=parseInt($('#fNum').value);$('#nomeA').textContent=nomeAluno(p,n);$('#fNum').classList.toggle('falta',!(n>=1&&n<=99))}
+  for(let i=0;i<p.nQ;i++)pinta(i);notas();
+  if(cv)desenhaPrev(cv,d.img,p,resp,duv,modoGab);
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const q=+b.dataset.q,k=+b.dataset.k;resp[q]=resp[q]===k?-1:k;pinta(q);notas();if(cv)desenhaPrev(cv,d.img,p,resp,duv,modoGab)});
+  if(!modoGab)$('#fNum').oninput=notas;
+  const salvarR=async()=>{
+    if(modoGab){p.gab=resp.map((v,i)=>v>=0?v:(p.gab[i]===-3?-3:-1));salvar();toast('Gabarito salvo');pilha.pop();atual={tela:'gabarito'};render();return}
+    const n=parseInt($('#fNum').value);
+    if(!(n>=1&&n<=99)){await aviso('Falta o número','Digite o <b>número de chamada</b> do aluno no campo vermelho, lá em cima.');window.scrollTo(0,0);$('#fNum').focus();return}
+    const outro=p.res.find(r=>r.num===n&&r.id!==editId);
+    if(outro&&!await pergunta('O aluno nº '+n+(nomeAluno(p,n)?' ('+nomeAluno(p,n)+')':'')+' já foi corrigido antes. Trocar pela correção nova?','Sim, trocar'))return;
+    if(outro)p.res=p.res.filter(r=>r!==outro);
+    if(editId){const r=p.res.find(r=>r.id===editId);r.num=n;r.resp=resp.slice();salvar();toast('Correção atualizada');voltar();return}
+    p.res.push({id:uid(),num:n,resp:resp.slice(),data:Date.now()});salvar();
+    while(pilha.length&&pilha[pilha.length-1].tela==='salvo')pilha.pop();atual={tela:'salvo',arg:{num:n,resp:resp.slice()}};render();
+  };
+  $('#bSalvarR').onclick=salvarR;if($('#bSalvarR2'))$('#bSalvarR2').onclick=salvarR;
+  if($('#bDesc'))$('#bDesc').onclick=()=>{voltar();corrigirCartao(modoGab?'gabarito':'corrigir')};
+  if($('#bApagarR'))$('#bApagarR').onclick=async()=>{if(!await pergunta('Apagar a correção deste aluno?','Sim, apagar',true))return;p.res=p.res.filter(r=>r.id!==editId);salvar();voltar()};
+}
+TELAS.revisao=d=>telaRevisao(d,false);
+TELAS.revGab=d=>telaRevisao(d,true);
+
+/* ---- salvo ---- */
+TELAS.salvo=a=>{
+  const p=prova();titulo('Salvo');const c=corrigir(p,a.resp),nm=nomeAluno(p,a.num);
+  $('#tela').innerHTML=`<div class="card centro"><div class="grandeOk">${IC.check}</div><h2 class="grande">Aluno nº ${a.num} salvo</h2>${nm?`<div style="font-weight:700">${esc(nm)}</div>`:''}
+  <div class="notas" style="justify-content:center">${c.disc.map(x=>`<div>${esc(x.nome)}<b>${fmt(x.nota)}</b></div>`).join('')}</div>
+  <p class="muted">${p.res.length} ${p.res.length===1?'cartão corrigido':'cartões corrigidos'} até agora</p></div>
+  <button class="btn verde" id="bProx">${IC.camera} Corrigir o próximo cartão</button>
+  <button class="btn sec" id="bVerN">${IC.notas} Ver as notas</button><button class="btn leve" id="bFim">Terminei por hoje</button>`;
+  $('#bProx').onclick=()=>corrigirCartao('corrigir');
+  $('#bVerN').onclick=()=>ir('notas');
+  $('#bFim').onclick=()=>{fecharCamera();irInicioProva()};
+};
+
+/* ---- notas ---- */
+TELAS.notas=()=>{
+  const p=prova();titulo('Notas');
+  const rs=p.res.slice().sort((a,b)=>a.num-b.num);
+  if(!rs.length){$('#tela').innerHTML=`<div class="card centro"><div class="ilus">${DES.pronto}</div><h2 class="grande">Ainda não tem notas</h2><p class="muted">As notas aparecem aqui depois que você corrigir os cartões.</p></div><button class="btn verde" id="bC">${IC.camera} Corrigir os cartões</button>`;$('#bC').onclick=()=>corrigirCartao('corrigir');return}
+  const temNome=!!(p.alunos||'').trim();
+  let h=`<div class="card"><div style="font-size:1.1em"><b>${rs.length}</b> ${rs.length===1?'aluno corrigido':'alunos corrigidos'}</div>
+  <button class="btn verde" id="bCsv">${IC.baixar} Baixar planilha</button><button class="btn sec" id="bCop">Copiar as notas</button>
+  <p class="muted" style="margin:4px 0 0">A planilha abre no Excel e no Google Planilhas. "Copiar" serve para colar as notas direto numa planilha ou no diário.</p></div>
+  <p class="muted" style="margin:0 4px 8px">Toque no nome de um aluno para ver ou consertar a correção.</p>
+  <div class="tabwrap"><table><thead><tr><th>Nº</th>${temNome?'<th class="nome">Nome</th>':''}${p.disc.map(d=>`<th>${esc(d.nome)}<br><span style="font-weight:400">(vale ${fmt(d.valor)})</span></th>`).join('')}</tr></thead><tbody>`;
+  for(const r of rs){const c=corrigir(p,r.resp);h+=`<tr class="click" data-id="${r.id}"><td><b>${r.num}</b></td>${temNome?`<td class="nome">${esc(nomeAluno(p,r.num))}</td>`:''}${c.disc.map(x=>`<td><b>${fmt(x.nota)}</b></td>`).join('')}</tr>`}
+  h+=`</tbody></table></div><div style="height:14px"></div>`;
+  if(temNome){const falt=(p.alunos||'').split('\n').map((s,i)=>[i+1,s.trim()]).filter(([n,s])=>s&&!rs.some(r=>r.num===n));
+    if(falt.length)h+=`<div class="aviso"><b>Ainda sem correção (${falt.length}):</b><br>${falt.map(([n,s])=>n+'. '+esc(s)).join('<br>')}</div>`}
+  h+=`<details><summary>Quais questões a turma mais errou</summary><div class="dentro">`;
+  for(let i=0;i<p.nQ;i++){const g=p.gab[i];const ac=rs.filter(r=>g===-3||(g>=0&&r.resp[i]===g)).length,pc=Math.round(100*ac/rs.length);
+    h+=`<div style="display:flex;align-items:center;gap:8px;margin:8px 0"><span style="width:30px;text-align:right;font-weight:800">${i+1}</span><div class="barra" style="flex:1"><i style="width:${pc}%;background:${pc<40?'#c0392b':pc<70?'#d9a000':'#17824a'}"></i></div><span style="width:58px;font-size:.85em">${pc}% certo</span></div>`}
+  h+=`</div></details><button class="btn verde" id="bMais">${IC.camera} Corrigir mais cartões</button><button class="btn perigo" id="bZera" style="margin-top:24px">Apagar todas as correções</button>`;
+  $('#tela').innerHTML=h;
+  document.querySelectorAll('tr.click').forEach(tr=>tr.onclick=()=>{const r=p.res.find(x=>x.id===tr.dataset.id);ir('revisao',{resp:r.resp.slice(),duv:Array(p.nQ).fill(false),num:r.num,numDuv:false,editId:r.id})});
+  $('#bCsv').onclick=()=>baixar(new Blob(['﻿'+tabela(p,';',true)],{type:'text/csv;charset=utf-8'}),'notas-'+limpa(p.nome+(p.turma?' '+p.turma:''))+'.csv');
+  $('#bCop').onclick=()=>{const t=tabela(p,'\t',false);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Notas copiadas. Agora é só colar.'),()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast('Notas copiadas')}catch(e){toast('Não consegui copiar')}a.remove()})};
+  $('#bMais').onclick=()=>corrigirCartao('corrigir');
+  $('#bZera').onclick=async()=>{if(!await pergunta('Apagar as correções de todos os '+p.res.length+' alunos desta prova? Não tem como desfazer.','Sim, apagar tudo',true))return;p.res=[];salvar();render()};
+};
+
+/* ============ começo ============ */
+window.__T={cardSVG,processa,layout,corrigir,novaProva};
+if(!DB.cfg.viuTuto&&!DB.provas.length)atual={tela:'tutorial',arg:{i:0}};
+else if(DB.ativa&&prova()){pilha=[{tela:'inicio'}];atual={tela:'prova'}}
+else atual={tela:'inicio'};
+render();
 </script>
 </body>
 </html>
