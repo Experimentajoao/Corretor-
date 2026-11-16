@@ -244,7 +244,7 @@ function cardSVG(p,fill){
   s+=`<text x="24" y="21.5" font-size="5" font-weight="700">CARTÃO-RESPOSTA</text>`;
   s+=`<text x="24" y="27.5" font-size="3.4">${esc((p.nome||'').slice(0,48))}${p.turma?' · '+esc(p.turma.slice(0,20)):''}</text>`;
   s+=`<text x="${ASS.x+1}" y="${ASS.y+3.2}" font-size="2.6" fill="#555">Nome do aluno (escreva com letra legível)</text><rect x="${ASS.x}" y="${ASS.y}" width="${ASS.w}" height="${ASS.h}" rx="1" fill="none" stroke="#000" stroke-width="0.3"/>`;
-  if(fill&&fill.nome)s+=`<text x="${ASS.x+4}" y="${ASS.y+10}" font-size="6" font-family="cursive" fill="#1b2a6b">${esc(fill.nome)}</text>`;
+  if(fill&&fill.nome)s+=`<text x="${ASS.x+4}" y="${ASS.y+(fill.nomeY||10)}" font-size="${fill.nomeTam||6}" font-family="cursive" fill="#1b2a6b">${esc(fill.nome)}</text>`; // nomeY/nomeTam: só para testes
   s+=`<text x="24" y="51" font-size="3.3">Turma:</text><line x1="36" y1="51.6" x2="80" y2="51.6" stroke="#000" stroke-width="0.25"/>`;
   s+=`<text x="90" y="51" font-size="3.3">Data:</text><line x1="99" y1="51.6" x2="140" y2="51.6" stroke="#000" stroke-width="0.25"/>`;
   for(const H of L.heads)s+=`<text x="${H.x}" y="${H.y+4.6}" font-size="3.4" font-weight="700">${esc(H.nome.toUpperCase())}</text><text x="${H.x+H.w}" y="${H.y+4.6}" font-size="2.6" text-anchor="end" fill="#555">${H.de} a ${H.ate}</text><line x1="${H.x}" y1="${H.y+6}" x2="${H.x+H.w}" y2="${H.y+6}" stroke="#000" stroke-width="0.3"/>`;
@@ -382,25 +382,48 @@ function processa(id,p){
   for(const d of Dq){const D=decide(d.map(v=>v-b0));resp.push(D.r);duv.push(D.duv)}
   return{ok:true,H,pts,resp,duv,area:areaLida};
 }
-function recorte(id,H,R,ppm){
-  const W=Math.round(R.w*ppm),Hh=Math.round(R.h*ppm),c=document.createElement('canvas');c.width=W;c.height=Hh;
-  const cx=c.getContext('2d'),out=cx.createImageData(W,Hh),s=id.data,o=out.data,w=id.width,h=id.height;
-  for(let y=0;y<Hh;y++)for(let x=0;x<W;x++){const[u,v]=aplica(H,R.x+x/ppm,R.y+y/ppm);const ui=u|0,vi=v|0,j=(y*W+x)*4;
-    if(ui<0||vi<0||ui>=w||vi>=h){o[j]=o[j+1]=o[j+2]=255;o[j+3]=255;continue}const i=(vi*w+ui)*4;o[j]=s[i];o[j+1]=s[i+1];o[j+2]=s[i+2];o[j+3]=255}
-  const g0=new Uint8Array(W*Hh);for(let i=0;i<W*Hh;i++)g0[i]=(o[i*4]*77+o[i*4+1]*150+o[i*4+2]*29)>>8;
-  const gs=new Uint8Array(W*Hh);for(let y=0;y<Hh;y++)for(let x=0;x<W;x++){let t=0,n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const yy=y+dy,xx=x+dx;if(yy>=0&&yy<Hh&&xx>=0&&xx<W){t+=g0[yy*W+xx];n++}}gs[y*W+x]=t/n}
-  // realce: o papel fica branco e a escrita escura, mesmo com sombra (fundo estimado por linha de blocos)
-  const bs=Math.max(8,Math.round(Hh/2)),bg=new Float32Array(W*Hh);
-  for(let y=0;y<Hh;y++)for(let x=0;x<W;x+=4){let m=0;const x0=Math.max(0,x-bs),x1=Math.min(W-1,x+bs),y0=Math.max(0,y-bs),y1=Math.min(Hh-1,y+bs);
-    const vs=[];for(let yy=y0;yy<=y1;yy+=3)for(let xx=x0;xx<=x1;xx+=3)vs.push(gs[yy*W+xx]);vs.sort((a,b)=>a-b);m=vs[Math.floor(vs.length*0.85)];for(let k=0;k<4&&x+k<W;k++)bg[y*W+x+k]=m}
-  for(let i=0;i<W*Hh;i++){let v=gs[i]/Math.max(bg[i],1);v=v>0.86?255:Math.max(0,(v-0.35)/0.51)*235;o[i*4]=o[i*4+1]=o[i*4+2]=Math.max(0,Math.min(255,v))}
-  cx.putImageData(out,0,0);
-  // corta o espaço vazio à direita e a legenda do topo, para o nome aparecer grande
-  const y0=Math.round(4.2*ppm),y1=Hh-Math.round(1.2*ppm),x0=Math.round(1.2*ppm);let dir=0;
-  for(let x=x0;x<W-Math.round(1*ppm);x++){let n=0;for(let y=y0;y<y1;y++)if(o[(y*W+x)*4]<120)n++;if(n>=2)dir=x}
-  const wf=Math.min(W,Math.max(Math.round(70*ppm),dir+Math.round(4*ppm))),hf=y1-y0;
-  const c2=document.createElement('canvas');c2.width=wf;c2.height=hf;const x2=c2.getContext('2d');x2.fillStyle='#fff';x2.fillRect(0,0,wf,hf);x2.drawImage(c,x0+2,y0,wf-x0-2,hf,0,0,wf-x0-2,hf);
-  return c2.toDataURL('image/jpeg',0.75);
+// recorte do nome escrito pelo aluno: pega a caixa inteira com folga, suaviza e só clareia o fundo
+function recorte(id,H){
+  const ppm=9,MX=3,MY0=2.5,MY1=3,RX=ASS.x-MX,RY=ASS.y-MY0,RW=ASS.w+2*MX,RH=ASS.h+MY0+MY1;
+  const W=Math.round(RW*ppm),Hh=Math.round(RH*ppm),s=id.data,w=id.width,h=id.height,g=new Float32Array(W*Hh);
+  for(let y=0;y<Hh;y++)for(let x=0;x<W;x++){const[u,v]=aplica(H,RX+x/ppm,RY+y/ppm);
+    if(u<0||v<0||u>=w-1||v>=h-1){g[y*W+x]=255;continue}
+    const xi=u|0,yi=v|0,fx=u-xi,fy=v-yi,i=(yi*w+xi)*4,lum=k=>s[k]*0.299+s[k+1]*0.587+s[k+2]*0.114;
+    g[y*W+x]=lum(i)*(1-fx)*(1-fy)+lum(i+4)*fx*(1-fy)+lum(i+w*4)*(1-fx)*fy+lum(i+w*4+4)*fx*fy}
+  // fundo (cor do papel) estimado em blocos e interpolado: tira sombra sem mexer no traço
+  const B=32,nbx=Math.ceil(W/B),nby=Math.ceil(Hh/B),bv=new Float32Array(nbx*nby);
+  for(let by=0;by<nby;by++)for(let bx=0;bx<nbx;bx++){const vs=[];
+    for(let y=by*B;y<Math.min(Hh,by*B+B);y+=2)for(let x=bx*B;x<Math.min(W,bx*B+B);x+=2)vs.push(g[y*W+x]);
+    vs.sort((a,b)=>a-b);bv[by*nbx+bx]=Math.max(40,vs[Math.floor(vs.length*0.9)])}
+  const fundo=(x,y)=>{const fx=Math.min(nbx-1,Math.max(0,x/B-0.5)),fy=Math.min(nby-1,Math.max(0,y/B-0.5)),x0=fx|0,y0=fy|0,x1=Math.min(nbx-1,x0+1),y1=Math.min(nby-1,y0+1),ax=fx-x0,ay=fy-y0;
+    return bv[y0*nbx+x0]*(1-ax)*(1-ay)+bv[y0*nbx+x1]*ax*(1-ay)+bv[y1*nbx+x0]*(1-ax)*ay+bv[y1*nbx+x1]*ax*ay};
+  const o=new Uint8ClampedArray(W*Hh);
+  for(let y=0;y<Hh;y++)for(let x=0;x<W;x++){const r=g[y*W+x]/fundo(x,y);o[y*W+x]=r>=0.92?255:255*Math.pow(Math.max(0,r)/0.92,1.5)}
+  // corta só o espaço vazio à direita, com bastante folga; se a escrita chega perto da borda, mantém a caixa toda
+  const yi0=Math.round((MY0+4)*ppm),yi1=Math.round((MY0+ASS.h-0.8)*ppm),xi0=Math.round((MX+0.8)*ppm),xi1=Math.round((MX+ASS.w-0.8)*ppm);let ult=0;
+  for(let x=xi0;x<xi1;x++){let n=0;for(let y=yi0;y<yi1;y++)if(o[y*W+x]<150)n++;if(n>=3)ult=x}
+  let wf=W;if(ult&&ult<xi1-Math.round(6*ppm))wf=Math.min(W,Math.max(Math.round(85*ppm),ult+Math.round(12*ppm)));
+  const c=document.createElement('canvas');c.width=wf;c.height=Hh;const cx=c.getContext('2d'),im=cx.createImageData(wf,Hh);
+  for(let y=0;y<Hh;y++)for(let x=0;x<wf;x++){const v=o[y*W+x],j=(y*wf+x)*4;im.data[j]=im.data[j+1]=im.data[j+2]=v;im.data[j+3]=255}
+  cx.putImageData(im,0,0);return c.toDataURL('image/jpeg',0.85);
+}
+// só acha o cartão na imagem (sem ler as respostas): usado para recortar o nome de uma foto melhor
+function acharCartao(id){
+  const w=id.width,h=id.height,g=toGray(id);
+  const f=Math.max(1,Math.ceil(Math.max(w,h)/800));const sm=downscale(g,w,h,f);
+  const q=detectMarkers(sm.g,sm.w,sm.h);if(!q)return null;
+  let pts=q.map(c=>{const R=Math.sqrt(c.a)*f*0.9;return refina(g,w,h,c.x*f+(f-1)/2,c.y*f+(f-1)/2,R)});
+  let H=homografia(MK,pts.map(p=>[p.x,p.y]));
+  if(!H||!barraOk(g,w,h,H)){pts=[pts[3],pts[2],pts[1],pts[0]];H=homografia(MK,pts.map(p=>[p.x,p.y]));if(!H||!barraOk(g,w,h,H))return null}
+  return H;
+}
+// câmera ao vivo no Android: pede uma foto de verdade (mais nítida que o vídeo) só para o recorte do nome
+async function nomeDaFoto(){
+  try{if(!cam.track||typeof ImageCapture==='undefined'||cam.track.readyState!=='live')return null;
+    const blob=await new ImageCapture(cam.track).takePhoto();const bmp=await createImageBitmap(blob);
+    const sc=Math.min(1,2400/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);
+    const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,c.width,c.height);const id=x.getImageData(0,0,c.width,c.height);
+    const H=acharCartao(id);return H?recorte(id,H):null}catch(e){return null}
 }
 function retifica(id,H,esc){
   const W=Math.round(210*esc),Hh=Math.round(297*esc),c=document.createElement('canvas');c.width=W;c.height=Hh;
@@ -964,10 +987,11 @@ function lido(R,id){
   const pv=prova();
   if(pv&&pv.area&&R.area&&R.area!==pv.area){fecharCamera();ir('falha',{outra:R.area});return}
   const img=retifica(id,R.H,2.4);
-  let ass=null;try{ass=recorte(id,R.H,ASS,6)}catch(e){}
+  let ass=null;try{ass=recorte(id,R.H)}catch(e){}
   const dados={resp:R.resp.slice(),duv:R.duv.slice(),img,ass};
   if(atual&&(atual.tela==='falha'))pilha.length&&(atual=pilha.pop());
   ir(cam.modo==='gabarito'?'revGab':'revisao',dados);
+  if(cam.modo!=='gabarito'&&cam.stream)nomeDaFoto().then(u=>{if(!u)return;dados.ass=u;const im=$('#assImg');if(im&&atual&&atual.arg===dados)im.src=u});
 }
 
 /* ---- não consegui ler ---- */

@@ -1,6 +1,6 @@
 // Guarda o app no celular para funcionar sem internet.
 // Ao publicar uma versão nova do app, troque o número abaixo.
-const VERSAO = 'corretor-v4';
+const VERSAO = 'corretor-v5';
 const ARQUIVOS = ['./', './index.html', './manifest.json', './icone-192.png', './icone-512.png', './icone-180.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSAO).then(c => c.addAll(ARQUIVOS)).then(() => self.skipWaiting()));
