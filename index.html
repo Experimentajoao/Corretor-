@@ -1004,7 +1004,7 @@ function laco(){
 function aoDetectar(r,f,vw,vh){
   const valido=r&&r.ok;
   desenhaOv(valido?r.q:null,f,vw,vh);
-  if(!valido){cam.est=0;cam.ult=null;
+  if(!valido){cam.est=0;cam.ult=null;cam.leituras=[];
     if(!cam.armado){cam.perdido++;if(cam.perdido>=3)cam.armado=true}
     msg(cam.armado?'Mostre o cartão inteiro, com os 4 quadrados pretos':'Agora mostre o próximo cartão');return}
   if(!cam.armado){msg('Agora mostre o próximo cartão');cam.perdido=0;return}
@@ -1012,17 +1012,36 @@ function aoDetectar(r,f,vw,vh){
   {const[tl,tr,bl,br]=r.q,hp=(Math.hypot(tl.x-bl.x,tl.y-bl.y)+Math.hypot(tr.x-br.x,tr.y-br.y))/2*f;if(hp/273<1.6){cam.est=0;msg('Aproxime mais o celular do cartão');return}}
   const tol=Math.max(peq.width,peq.height)*0.008,q=r.q;
   const est=cam.ult&&q.every((c,i)=>Math.hypot(c.x-cam.ult[i].x,c.y-cam.ult[i].y)<tol);
-  cam.est=est?cam.est+1:1;cam.ult=q;msg('Achei o cartão! Segure parado…',true);
-  if(cam.est>=2)capturar(vw,vh);
+  cam.est=est?cam.est+1:1;cam.ult=q;if(!est)cam.leituras=[];
+  msg(cam.leituras&&cam.leituras.length?'Conferindo a leitura… segure parado':'Achei o cartão! Segure parado…',true);
+  if(cam.est>=3)capturar(vw,vh);
+}
+// lê vários quadros seguidos e só aceita quando pelo menos 2 leituras concordam em todas as questões;
+// uma foto tremida sozinha não gera mais dúvida nem nota errada
+const MAXQ=6;
+function combina(L){
+  const n=L[0].resp.length,resp=[],duv=[];
+  for(let i=0;i<n;i++){const cont={};for(const R of L){const k=R.resp[i];cont[k]=cont[k]||{n:0,firme:0};cont[k].n++;if(!R.duv[i])cont[k].firme++}
+    const ord=Object.entries(cont).sort((a,b)=>b[1].n-a[1].n||b[1].firme-a[1].firme);const[k,c]=ord[0];
+    const outrasFirmes=ord.slice(1).some(([,x])=>x.firme>0);
+    resp.push(+k);duv.push(L.length===1?L[0].duv[i]:!(c.n>=2&&c.firme>=1&&!outrasFirmes))}
+  return{resp,duv};
 }
 function capturar(vw,vh){
-  cam.lendo=true;cam.est=0;
+  cam.lendo=true;
   grande.width=vw;grande.height=vh;grandex.drawImage(video,0,0);const big=grandex.getImageData(0,0,vw,vh);
   const copia=new Uint8ClampedArray(big.data);
   trabalho('ler',copia,vw,vh,provaLeve(prova())).then(R=>{
-    if(!cam.rodando){cam.lendo=false;return}
-    if(!R||!R.ok){cam.lendo=false;return}
-    cam.armado=false;cam.perdido=0;posLeitura(R,big);cam.lendo=false;
+    cam.lendo=false;
+    if(!cam.rodando||!R||!R.ok)return;
+    const p=prova();
+    if(p&&p.area&&R.area&&R.area!==p.area){cam.leituras=[];cam.est=0;cam.armado=false;cam.perdido=0;posLeitura(R,big);return}
+    cam.leituras=(cam.leituras||[]).concat([R]);
+    const L=cam.leituras,C=combina(L),A=ativas(p);
+    const pronto=L.length>=2&&A.every(i=>!C.duv[i]);
+    if(!pronto&&L.length<MAXQ)return; // continua lendo os próximos quadros
+    const Rf=Object.assign({},R,{resp:C.resp,duv:C.duv});
+    cam.leituras=[];cam.est=0;cam.armado=false;cam.perdido=0;posLeitura(Rf,big);
   });
 }
 // depois de ler: salva sozinho quando não há dúvida; senão, abre a conferência
