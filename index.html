@@ -321,7 +321,7 @@ function pontua([tl,tr,bl,br]){
   const top=dist(tl,tr),bot=dist(bl,br),lef=dist(tl,bl),rig=dist(tr,br);
   if(Math.max(top/bot,bot/top)>1.7||Math.max(lef/rig,rig/lef)>1.7)return null;
   const asp=(top+bot)/(lef+rig),esp=186/273,la=Math.abs(Math.log(asp/esp));if(la>0.4)return null;
-  const ar=[tl.a,tr.a,bl.a,br.a],mx=Math.max(...ar),mn=Math.min(...ar);if(mx/mn>2.8)return null;
+  const ar=[tl.a,tr.a,bl.a,br.a],mx=Math.max(...ar),mn=Math.min(...ar);if(mx/mn>3.6)return null;
   const ms=Math.sqrt((tl.a+tr.a+bl.a+br.a)/4),ex=MKS*((top+bot)/2)/186,rt=ms/ex;if(rt<0.55||rt>1.65)return null;
   const area=Math.abs((br.x-tl.x)*(tr.y-bl.y)-(tr.x-bl.x)*(br.y-tl.y))/2;
   return la+Math.abs(Math.log(rt))+0.5*Math.log(mx/mn)-Math.log(area);
@@ -369,6 +369,38 @@ function escuro(g,w,h,H,x,y,rs,faixa){
   return Math.max(0,1-v/Math.max(bco,1));
 }
 const FAIXA=0xf0;
+// papel curvado ou foto inclinada desalinham as bolinhas alguns milímetros; aqui cada linha de questões
+// é reencaixada procurando os contornos impressos das 5 bolinhas perto da posição esperada
+function alinhar(g,w,h,H,L){
+  const R1=L.d/2,R2=L.d/2+0.75,N=12,cs=[],sn=[];for(let k=0;k<N;k++){cs.push(Math.cos(2*Math.PI*k/N));sn.push(Math.sin(2*Math.PI*k/N))}
+  // nota alta = contorno escuro da bolinha com papel claro em volta
+  function nota(Q,ox,oy){let t=0;for(const[x,y]of Q.alts){let a=0,b=0;for(let k=0;k<N;k++){
+      let[u,v]=aplica(H,x+ox+R1*cs[k],y+oy+R1*sn[k]);a+=amostra(g,w,h,u,v);[u,v]=aplica(H,x+ox+R2*cs[k],y+oy+R2*sn[k]);b+=amostra(g,w,h,u,v)}
+    t+=(b-a)/N}return t}
+  function busca(Qs,cx,cy,r,st){let best=-1e9,bx=cx,by=cy;for(let oy=cy-r;oy<=cy+r+1e-9;oy+=st)for(let ox=cx-r;ox<=cx+r+1e-9;ox+=st){let n=0;for(const Q of Qs)n+=nota(Q,ox,oy);if(n>best){best=n;bx=ox;by=oy}}return[bx,by,best]}
+  // um bloco por coluna inteira: acima da primeira linha e abaixo da última não há bolinhas,
+  // então encaixar a coluna uma linha acima ou abaixo deixa uma linha no vazio e perde
+  const blocos=[],cols={};L.qs.forEach(Q=>{(cols[Q.c]=cols[Q.c]||[]).push(Q)});for(const c in cols)blocos.push(cols[c].sort((a,b)=>a.r-b.r));
+  const off=L.qs.map(()=>[0,0]),qual=L.qs.map(()=>0);
+  // cada bloco: todas as posições possíveis de cada linha, depois o caminho mais coerente de linha em linha
+  // (linhas vizinhas quase não mudam de deslocamento). Uma linha encaixada fora das bolinhas pesa muito,
+  // e por isso o bloco não escorrega para a linha de cima ou de baixo.
+  const OX=[],OY=[];for(let v=-4;v<=4+1e-9;v+=0.5)OX.push(v);for(let v=-8;v<=8+1e-9;v+=0.5)OY.push(v);
+  const nx=OX.length,ny=OY.length,S=nx*ny;
+  for(const B of blocos){if(!B.length)continue;
+    const sc=B.map(Q=>{const a=new Float32Array(S);for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)a[j*nx+i]=Math.log(Math.max(nota(Q,OX[i],OY[j]),2));return a});
+    let ac=Float32Array.from(sc[0]);const vem=[];
+    for(let r=1;r<B.length;r++){const nv=new Float32Array(S),de=new Int32Array(S);
+      for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){let m=-1e9,mi=0;
+        for(let dj=-2;dj<=2;dj++){const jj=j+dj;if(jj<0||jj>=ny)continue;for(let di=-2;di<=2;di++){const ii=i+di;if(ii<0||ii>=nx)continue;const k=jj*nx+ii;if(ac[k]>m){m=ac[k];mi=k}}}
+        nv[j*nx+i]=m+sc[r][j*nx+i];de[j*nx+i]=mi}
+      ac=nv;vem.push(de)}
+    let k=0;for(let t=1;t<S;t++)if(ac[t]>ac[k])k=t;
+    const cam=new Array(B.length);cam[B.length-1]=k;for(let r=B.length-1;r>0;r--){k=vem[r-1][k];cam[r-1]=k}
+    B.forEach((Q,r)=>{const i=cam[r]%nx,j=(cam[r]/nx)|0;let n;let[ox,oy]=[OX[i],OY[j]];[ox,oy,n]=busca([Q],ox,oy,0.4,0.1);off[Q.q]=[ox,oy];qual[Q.q]=n});
+  }
+  return{off,qual};
+}
 function processa(id,p){
   const w=id.width,h=id.height,g=toGray(id);
   const f=Math.max(1,Math.ceil(Math.max(w,h)/800));const sm=downscale(g,w,h,f);
@@ -378,13 +410,21 @@ function processa(id,p){
   if(!H||!barraOk(g,w,h,H)){pts=[pts[3],pts[2],pts[1],pts[0]];H=homografia(MK,pts.map(p=>[p.x,p.y]));
     if(!H||!barraOk(g,w,h,H))return{ok:false,msg:'Encontrei algo parecido, mas não é um cartão deste app.'}}
   let areaLida=null;{const wr=[];let b=0;for(let x=BAR.x+3;x<=BAR.x+BAR.w-3;x+=4){const[u,v]=aplica(H,x,BAR.y+BAR.h+2.6);b+=amostra(g,w,h,u,v);wr.push(1)}b/=wr.length;
-    const esc=XAREA.map(x=>{let a=0;for(const[dx,dy]of[[1,1],[2.5,1],[1,2.5],[2.5,2.5],[1.75,1.75]]){const[u,v]=aplica(H,x+dx,BAR.y+dy*BAR.h/3.5);a+=amostra(g,w,h,u,v)}return a/5<0.62*b});
+    // procura cada quadradinho num raio de 2 mm (papel curvado desloca um pouco a posição)
+    const media=(x,y)=>{let a=0;for(const[dx,dy]of[[1,1],[2.5,1],[1,2.5],[2.5,2.5],[1.75,1.75]]){const[u,v]=aplica(H,x+dx,y+dy*BAR.h/3.5);a+=amostra(g,w,h,u,v)}return a/5};
+    const esc=XAREA.map(x=>{let m=1e9;for(let oy=-2;oy<=2;oy+=0.5)for(let ox=-2;ox<=2;ox+=0.5)m=Math.min(m,media(x+ox,BAR.y+oy));return m<0.62*b});
     if(esc.filter(Boolean).length===1)areaLida=MAREA[esc.indexOf(true)]}
   const L=layout(p),rs=L.d/2*0.62;
-  const Dq=L.qs.map(Q=>Q.alts.map(([x,y])=>escuro(g,w,h,H,x,y,rs,Q.r%2===1)));
+  const AL=alinhar(g,w,h,H,L),off=AL.off;
+  const Dq=L.qs.map((Q,qi)=>Q.alts.map(([x,y])=>escuro(g,w,h,H,x+off[qi][0],y+off[qi][1],rs,Q.r%2===1)));
+  // linha em que não se acharam bem os contornos das bolinhas: não confiar (vira dúvida)
+  const qs2=AL.qual.slice().sort((a,b)=>a-b),qmed=qs2[Math.floor(qs2.length/2)];
+  // conferências de que é mesmo um cartão desta prova e de que as bolinhas foram encontradas
+  if(p.area&&!areaLida)return{ok:false,msg:'Não consegui confirmar o cartão. Fotografe de novo, com a folha inteira e bem iluminada.'};
+  if(qmed<60)return{ok:false,msg:'Não encontrei bem as bolinhas. Fotografe de novo, de frente para a folha.'};
   const todos=Dq.flat().sort((a,b)=>a-b),b0=todos[Math.floor(todos.length*0.25)];
   const resp=[],duv=[];
-  for(const d of Dq){const D=decide(d.map(v=>v-b0));resp.push(D.r);duv.push(D.duv)}
+  Dq.forEach((d,qi)=>{const D=decide(d.map(v=>v-b0));resp.push(D.r);duv.push(D.duv||AL.qual[qi]<0.4*qmed)});
   return{ok:true,H,pts,resp,duv,area:areaLida};
 }
 // recorte do nome escrito pelo aluno: pega a caixa inteira com folga, suaviza e só clareia o fundo
@@ -938,7 +978,7 @@ function detectarRapido(d,w,h){
 }
 let LEITOR=null;const pend={};let seqL=0;
 function criaLeitor(){
-  try{const fns=[toGray,downscale,detectMarkers,ordena,dist,pontua,refina,homografia,aplica,amostra,mediaCirculo,barraOk,decide,escuro,processa,layout,detectarRapido];
+  try{const fns=[toGray,downscale,detectMarkers,ordena,dist,pontua,refina,homografia,aplica,amostra,mediaCirculo,barraOk,decide,escuro,alinhar,processa,layout,detectarRapido];
     const consts=`const MK=${JSON.stringify(MK)},MKS=${MKS},BAR=${JSON.stringify(BAR)},HDR=${HDR},MAREA=${JSON.stringify(MAREA)},XAREA=${JSON.stringify(XAREA)},LIM=${LIM},FAIXA=${FAIXA};\n`;
     const src=consts+fns.map(f=>f.toString()).join('\n')+`
 onmessage=e=>{const m=e.data;let r;try{r=m.t==='det'?detectarRapido(m.d,m.w,m.h):processa({data:m.d,width:m.w,height:m.h},m.p)}catch(x){r=m.t==='det'?null:{ok:false,msg:'erro'}}postMessage({n:m.n,r})};`;
